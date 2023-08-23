@@ -1,7 +1,5 @@
 ## Warmup - 1 ##
 
-print("hi")
-
 def sleep_in(weekday, vacation):
     """
     The parameter weekday is True if it is a weekday, and the parameter vacation is True if we are on vacation. We sleep in if it is not a weekday or we're on vacation. Return True if we sleep in.
@@ -83,12 +81,7 @@ def pos_neg(a, b, negative):
     pos_neg(-1, 1, False) → True
     pos_neg(-4, -5, True) → True
     """
-    if(abs(a) != a and abs(b) != b):
-        return negative
-    if(abs(a) == a and abs(b) == b):
-        return False
-    return not negative
-
+    return True if (a*b != abs(a*b) and not negative) or (negative and a != abs(a) and b != abs(b)) else False
 
 
 ## String - 1 ##
@@ -124,14 +117,7 @@ def make_tags(tag, word):
     return "<" + tag + ">" + word + "</" + tag + ">"
 
 def make_out_word(out, word):
-    """
-    Given an "out" string length 4, such as "<<>>", and a word, return a new string where the word is in the middle of the out string, e.g. "<<word>>".
-
-    make_out_word('<<>>', 'Yay') → '<<Yay>>'
-    make_out_word('<<>>', 'WooHoo') → '<<WooHoo>>'
-    make_out_word('[[]]', 'word') → '[[word]]'
-    """
-    return out[0:2] + word + out[2:4]
+    return out[:len(out)//2] + word + out[len(out)//2:]
 
 def extra_end(str):
     """
@@ -163,7 +149,7 @@ def first_half(str):
     first_half('HelloThere') → 'Hello'
     first_half('abcdef') → 'abc'
     """
-    return str[0:len(str)/2]
+    return str[0:int(len(str)/2.0)]
 
 def without_end(str):
     """Given a string, return a version without the first and last char, so "Hello" yields "ell". The string length will be at least 2.
@@ -186,7 +172,7 @@ def first_last6(nums):
     first_last6([6, 1, 2, 3]) → True
     first_last6([13, 6, 1, 2, 3]) → False
     """
-    return True if (int(nums[0]) == 6 or int(nums[len(nums)-1]) == 6) else False
+    return True if (str(nums[0]) == "6" or str(nums[len(nums)-1]) == "6") else False
 
 def same_first_last(nums):
     """
@@ -196,7 +182,7 @@ def same_first_last(nums):
     same_first_last([1, 2, 3, 1]) → True
     same_first_last([1, 2, 1]) → True
     """
-    return True if len(nums) >= 1 and int(nums[0]) == int(nums[len(nums)-1]) else False
+    return True if len(nums) >= 1 and str(nums[0]) == str(nums[len(nums)-1]) else False
 
 def make_pi(n):
     """
@@ -205,7 +191,7 @@ def make_pi(n):
     make_pi() → [3, 1, 4]
     """
     
-    return [3, 1, 4]
+    return [3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7][:n]
 
 def common_end(a, b):
     """
@@ -235,9 +221,7 @@ def rotate_left3(nums):
     rotate_left3([5, 11, 9]) → [11, 9, 5]
     rotate_left3([7, 0, 0]) → [0, 0, 7]
     """
-    nums.append(nums[0])
-    nums.remove(nums[0])
-    return nums
+    return nums[1:] + [nums[0]] if len(nums) >= 2 else nums
 
 def reverse3(nums):
     """
@@ -257,47 +241,7 @@ def max_end3(nums):
     max_end3([11, 5, 9]) → [11, 11, 11]
     max_end3([2, 11, 3]) → [3, 3, 3]
     """
-    return [nums[0]]*3 if nums[0] > nums[2] else [nums[2]]*3
-
-def sum2(nums):
-    """
-    Given an array of ints, return the sum of the first 2 elements in the array. If the array length is less than 2, just sum up the elements that exist, returning 0 if the array is length 0.
-
-    sum2([1, 2, 3]) → 3
-    sum2([1, 1]) → 2
-    sum2([1, 1, 1, 1]) → 2
-    """
-    return sum(nums) if len(nums) < 2 else sum(nums[0:2])
-
-def middle_way(a, b):
-    """
-    Given 2 int arrays, a and b, each length 3, return a new array length 2 containing their middle elements.
-
-    middle_way([1, 2, 3], [4, 5, 6]) → [2, 5]
-    middle_way([7, 7, 7], [3, 8, 0]) → [7, 8]
-    middle_way([5, 2, 9], [1, 4, 5]) → [2, 4]
-    """
-    return [a[1], b[1]]
-
-def make_ends(nums):
-    """
-    Given an array of ints, return a new array length 2 containing the first and last elements from the original array. The original array will be length 1 or more.
-
-    make_ends([1, 2, 3]) → [1, 3]
-    make_ends([1, 2, 3, 4]) → [1, 4]
-    make_ends([7, 4, 6, 2]) → [7, 2]
-    """
-    return [nums[0], nums[len(nums)-1]]
-
-def has23(nums):
-    """
-    Given an int array length 2, return True if it contains a 2 or a 3.
-
-    has23([2, 5]) → True
-    has23([4, 3]) → True
-    has23([4, 5]) → False
-    """
-    return True if ((2 in nums) or (3 in nums)) else False
+    return [nums[0]]*len(nums) if nums[0] > nums[len(nums)-1] else [nums[len(nums)-1]]*len(nums)
 
 
 ## Logic - 1 ##
@@ -395,14 +339,3 @@ def in1to10(n, outside_mode):
     in1to10(11, True) → True
     """
     return (n <= 1 or n >= 10) if outside_mode else (n >= 1 and n <= 10) 
-
-def near_ten(num):
-    """
-    Given a non-negative number "num", return True if num is within 2 of a multiple of 10. Note: (a % b) is the remainder of dividing a by b, so (7 % 5) is 2. See also: Introduction to Mod
-
-    near_ten(12) → True
-    near_ten(17) → False
-    near_ten(19) → True
-    """
-    return True if num%10 <= 2 or num%10 >= 8 else False
-
