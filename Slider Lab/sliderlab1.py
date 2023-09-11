@@ -51,25 +51,6 @@ def band(p):
             val += " ".join([*x[i*gWidth:i*gWidth + gWidth]]) + "   "
         print(val.strip())
 
-
-def getInvCount(arr):
-    inv_count = 0
-    empty_value = -1
-    for i in range(0, len(arr)):
-        for j in range(i + 1, len(arr)):
-            if arr[j] != empty_value and arr[i] != empty_value and arr[i] > arr[j]:
-                inv_count += 1
-    return inv_count
- 
-     
-# This function returns true
-# if given 8 puzzle is solvable.
-def isSolvable(puzzle) :
-    # Count inversions in given 8 puzzle
-    inv_count = getInvCount(puzzle)
-    # return true if inversion count is even.
-    return (inv_count % 2 == 0)
-
 def BFS(s, g):
     if s == g:
         return [s]
@@ -92,10 +73,11 @@ def BFS(s, g):
 
     return []
 
+def thing(c):
+    return gGoal.index(c)
+
 startTime = time.time()
-puzzle('43175628_', '81647325_')
-print(getInvCount('43175628_'))
-print(getInvCount('81647325_'))
+puzzle('5463217_8', '6_5321478')
 gSteps = BFS(gStart, gGoal)
 output(gSteps if gSteps != [] else [gStart])
 print(f"Steps: {len(gSteps)-1}")
