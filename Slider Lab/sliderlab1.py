@@ -52,7 +52,34 @@ def band(p):
             val += " ".join([*x[i*gWidth:i*gWidth + gWidth]]) + "   "
         print(val.strip())
 
+def count_inversions(puzzle_str):
+
+    inversions = 0
+    n = len(puzzle_str)
+    
+    for i in range(n):
+        if puzzle_str[i] == '_':
+            continue
+        for j in range(i+1, n):
+            if puzzle_str[j] == '_':
+                continue
+            if puzzle_str[i] > puzzle_str[j]:
+                inversions += 1
+                
+    return inversions
+
+def is_solvable(start_state_str, goal_state_str):
+
+    start_inversions = count_inversions(start_state_str)
+    goal_inversions = count_inversions(goal_state_str)
+    
+    return (start_inversions % 2) == (goal_inversions % 2) or abs(start_inversions-goal_inversions) == 1
+
 def BFS(s, g):
+    
+    if not is_solvable(s, g):
+        return []
+        
     if s == g:
         return [s]
 
