@@ -1,3 +1,4 @@
+import sys;args=sys.argv[1:]
 import math 
 import time
 
@@ -54,6 +55,7 @@ def band(p):
 def BFS(s, g):
     if s == g:
         return [s]
+
     parseMe = [s]
     dctSeen = {s:" "}
 
@@ -73,12 +75,15 @@ def BFS(s, g):
 
     return []
 
-def thing(c):
-    return gGoal.index(c)
-
 startTime = time.time()
-puzzle('5463217_8', '6_5321478')
+
+if len(args) == 2:
+    puzzle(args[0], args[1])
+else:
+    puzzle(args[0], '')
+
 gSteps = BFS(gStart, gGoal)
 output(gSteps if gSteps != [] else [gStart])
 print(f"Steps: {len(gSteps)-1}")
 print("Time:", str(round(time.time()-startTime, 2)) + "s")
+# Medha Pappula, 6, 2026
