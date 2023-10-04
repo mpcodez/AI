@@ -4,7 +4,10 @@ import time
 startTime = time.time()
 
 def diff(a, b):
-    return sum(a[i] != b[i] for i in range(6)) == 1
+    for i in range(6):
+        if a[i] != b[i]:
+            return a[i+1:] == b[i+1:]
+    return False
 
 with open(args[0]) as file:
     wordList = file.read().split("\n")
@@ -12,24 +15,36 @@ with open(args[0]) as file:
 edges = 0
 maxDeg = 0
 maxWord = ""
+length = len(wordList)
 
-def diff(a,b):
-    return [a[i]==b[i] for i in range(6)].count(False)==1
-    
-wDict=[set() for x in range(len(wordList))]
-for i in range(len(wordList)-1):
-    for y in range(i+1,len(wordList)):
-        if diff(wordList[i],wordList[y]):
+groups = {}
+for i in range(length):
+    for ind in range(6):
+        k = wordList[i][0:ind] + "_" + wordList[i][ind+1:]
+        if k in groups:
+            groups[k].append(i)
+        else:
+            groups.update({k: [i]})
+
+wDict=[set() for _ in range(length)]
+for k, l in groups.items():
+    ln = len(l)
+    for i in range(ln):
+        for j in range(i+1, ln):
             edges += 1
-            wDict[i].add(wordList[y])
-            wDict[y].add(wordList[i])
             
-            l1 = len(wDict[i])
+            wDict[l[i]].add(wordList[l[j]])
+            wDict[l[j]].add(wordList[l[i]])
+            
+            l1 = len(wDict[l[i]])
             if l1 > maxDeg:
                 maxDeg = l1
-                
             
-print("Word count: " + str(len(wordList)))
+            l1 = len(wDict[l[j]])
+            if l1 > maxDeg:
+                maxDeg = l1
+
+print("Word count: " + str(length))
 print("Edge count: " + str(edges))
 
 k2 = 0
@@ -82,7 +97,7 @@ print("Construction time: ", str(round(time.time()-startTime, 1)) + "s")
 if len(args) > 1:
     print("Second degree word: " + max2)
     
-    visited = [False]*len(wordList)
+    visited = [False]*length
     components = []
     count = 0
     word1 = args[1]
