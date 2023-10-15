@@ -145,10 +145,10 @@ def compact(path):
         g = rowOfSpace(path[i+1])
         
         if s == g:
-            if path[i].index("_") == path[i].index("_")+1:
-                retStr += "R"
-            else:
+            if path[i].index("_") == path[i+1].index("_")+1:
                 retStr += "L"
+            else:
+                retStr += "R"
                 
         elif s == g-1:
             retStr += "D"
@@ -161,6 +161,7 @@ for i in range(1, len(puzzles)):
     gStart = puzzles[i]
     puzzle(gStart, gGoal)
     gSteps = BFS(gStart, gGoal)
+    print(gSteps)
     print(gStart + " " + compact(gSteps))
 
 # Medha Pappula, 6, 2026
