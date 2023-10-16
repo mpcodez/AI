@@ -161,7 +161,41 @@ for i in range(1, len(puzzles)):
     gStart = puzzles[i]
     puzzle(gStart, gGoal)
     gSteps = BFS(gStart, gGoal)
-    print(gSteps)
     print(gStart + " " + compact(gSteps))
 
 # Medha Pappula, 6, 2026
+
+
+"""
+
+def solve(puzzle, goal):
+    if puzzle == goal:
+        return [puzzle]
+
+    if is_solvable(puzzle, goal):
+        return []
+
+    parseMe = [(h(puzzle), puzzle)] #where h(puzzle) is the manhattan distance of that puzzle
+    dctSeen = {puzzle:" "}
+
+    #modified BFS
+    while parseMe:
+        sort(parseMe)
+        node = parseMe.pop(0)[1]
+        for nbr in neighbors(node):
+            if nbr in dctSeen:
+                continue
+            dctSeen[nbr] = node
+            parseMe.append((h(nbr, goal), nbr))
+            if(nbr == goal):
+                tmp = dctSeen[nbr]
+                ret = [nbr]
+                while tmp != " ":
+                    ret.insert(0, tmp)
+                    tmp = dctSeen[tmp]
+                return ret
+                
+
+
+
+"""
