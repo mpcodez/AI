@@ -7,11 +7,22 @@ with open(args[0]) as file:
     puzzles = file.read().split("\n")
 
 print(puzzles[0] + " G")
-gGoal = puzzles[0]
 
+gGoal = puzzles[0]
 gWidth = 0
 gHeight = 0
 gSteps = []
+
+gWidth = int(math.sqrt(len(gGoal)))
+gHeight = int(len(gGoal)/gWidth)
+while len(gGoal)%gWidth != 0:
+    gWidth += 1
+    gHeight = int(len(gGoal)/gWidth)
+    
+if gHeight > gWidth:
+    tmp = gWidth
+    gWidth = gHeight
+    gHeight = tmp
 
 class Puzzle():
     def __init__(self, state, goal_state, level, parent = None):
@@ -58,12 +69,20 @@ class Queue:
 
     def enqueue(self, item):
         new_node = Node(item)
-        if self.tail is None:
-            self.head = self.tail = new_node
+        if self.tail is None or item[0] < self.head.data[0]:
+            # If the queue is empty or the new item has higher priority
+            new_node.next = self.head
+            self.head = new_node
+            if self.tail is None:
+                self.tail = new_node
         else:
-            self.tail.next = new_node
-            new_node.prev = self.tail
-            self.tail = new_node
+            current = self.head
+            while current.next and item[0] >= current.next.data[0]:
+                current = current.next
+            new_node.next = current.next
+            current.next = new_node
+            if new_node.next is None:
+                self.tail = new_node
 
     def dequeue(self):
         if self.is_empty():
@@ -79,27 +98,6 @@ class Queue:
     def is_empty(self):
         return self.head is None
 
-def puzzle(s, g):
-    global gStart, gGoal, gWidth, gHeight
-
-    gStart = s
-    if g == "":
-        l = [*s.replace("_", "")]
-        l.sort()
-        gGoal = "".join(l) + "_"
-    else:
-        gGoal = g
-
-    gWidth = int(math.sqrt(len(s)))
-    gHeight = int(len(s)/gWidth)
-    while len(s)%gWidth != 0:
-        gWidth += 1
-        gHeight = int(len(s)/gWidth)
-   
-    if gHeight > gWidth:
-        tmp = gWidth
-        gWidth = gHeight
-        gHeight = tmp
    
 def neighbors(p):
     i = p.index("_")
@@ -138,18 +136,18 @@ def is_solvable(start_state_str, goal_state_str):
     start_inversions = count_inversions(start_state_str)
     goal_inversions = count_inversions(goal_state_str)
    
-    return (gWidth%2 == 1 and (start_inversions % 2) != (goal_inversions % 2)) or (gWidth%2 == 0 and ((start_inversions+rowOfSpace(gStart)) % 2) != ((goal_inversions+rowOfSpace(gGoal)) % 2))
+    return (gWidth%2 == 1 and (start_inversions % 2) != (goal_inversions % 2)) or (gWidth%2 == 0 and ((start_inversions+rowOfSpace(start_state_str)) % 2) != ((goal_inversions+rowOfSpace(goal_state_str)) % 2))
 
 def aStar(s, g):
     if is_solvable(s.puzzle, g):
         return []
     
-    openSet = [(s.hDist, s)]
+    openSet = Queue()
+    openSet.enqueue((s.hDist, s))
     closedSet = {}
 
     while openSet:
-        openSet = sorted(openSet, key=lambda x: x[0])
-        node = openSet.pop(0)[1]
+        node = openSet.dequeue()[1]
         
         if node.puzzle in closedSet:
             continue
@@ -166,7 +164,7 @@ def aStar(s, g):
         
         for nbr in neighbors(node.puzzle):
             neighbor = Puzzle(nbr, g, node.level+1, node.puzzle)
-            openSet.append((neighbor.hDist+neighbor.level, neighbor))
+            openSet.enqueue((neighbor.hDist+neighbor.level, neighbor))
 
 
 def compact(path):
@@ -190,15 +188,10 @@ def compact(path):
             
     return retStr
 
-puzzles = []
-for i in range(1, len(puzzle)):
-    pzl = Puzzle(puzzles[i], gGoal, 0, " ")
-    puzzles.append((pzl.hDist,pzl))
-puzzles = sorted(puzzles, key=lambda x: x[0])
 
-for i in puzzles:
-    puzzle(i.puzzle, gGoal)
-    gSteps = aStar(i, gGoal)
-    print(gStart + " " + compact(gSteps))
+for i in range(1, len(puzzles)):
+    pzl = Puzzle(puzzles[i], gGoal, 0, " ")
+    gSteps = aStar(pzl, gGoal)
+    print(puzzles[i] + " " + compact(gSteps))
 
 # Medha Pappula, 6, 2026
