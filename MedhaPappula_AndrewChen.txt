@@ -1,0 +1,162 @@
+"""
+
+BFS - From Scratch or take from slider lab
+Modify it to solve 2 problems (Datastructures)
+
+1. You have levels, find how many nodes are in each level
+2. on the same puzzle, 
+
+
+"""
+
+### QUESTION ONE
+
+gWidth = 3
+
+def neighbors(p):
+    i = p.index("_")
+    val1 = switch(p, (i-gWidth), i) if 0 <= i-gWidth else ""
+    val2 = switch(p, i, i+gWidth) if len(p) > i+gWidth else ""
+    val3 = switch(p, i, i+1) if len(p) > i+1 and (i+1)%gWidth > (i)%gWidth else ""
+    val4 = switch(p, i-1, i) if 0 <= i-1 and (i)%gWidth > (i-1)%gWidth else ""
+    ret = set([val3, val4, val1, val2])
+    ret.discard("")
+    return list(ret)
+   
+def switch(p, smol, big):
+    return p[:smol] + p[big] + p[smol+1:big] + p[smol] + p[big+1:]
+
+
+s = "_15427638"
+
+
+parseMe = [s]
+dctSeen = {s}
+levels = {0:{s}}
+
+level = 0
+
+while parseMe and level <= 44:
+
+    if level+1 not in levels:
+        levels[level+1] = set()
+    
+    for node in levels[level]:
+        for nbr in neighbors(node):
+            if nbr not in dctSeen:
+                levels[level+1].add(nbr)
+                parseMe.append(nbr)
+                dctSeen.add(nbr)
+
+    level += 1
+
+total = 0
+for i in levels:
+    print(f"{i}: {len(levels[i])}")
+    total += len(levels[i])
+
+print(total)
+
+
+
+
+### QUESTION TWO
+
+import sys; args = sys.argv[1:]
+import math;
+strLen = 9
+sqrtLen = math.sqrt(strLen)
+gLength = (int)(sqrtLen)
+while ((strLen % gLength != 0)):
+    gLength -= 1
+gWidth = strLen//gLength
+
+
+def swap_characters(string, index1, index2):
+    if index1 > index2:
+        temp = index1
+        index1 = index2
+        index2 = temp
+    return string[:index1] + string[index2] + string[index1+1:index2] + string[index1] + string[index2+1:]
+
+def neighbors(puzzle):
+    posMoves = []
+    spaceIndex = puzzle.find("_")
+    if spaceIndex - gWidth >= 0:
+        posMoves.append(swap_characters(puzzle, spaceIndex, spaceIndex-gWidth))
+    if spaceIndex + gWidth < strLen:
+        posMoves.append(swap_characters(puzzle, spaceIndex, spaceIndex+gWidth))
+    if spaceIndex % gWidth != gWidth-1:
+        posMoves.append(swap_characters(puzzle, spaceIndex, spaceIndex+1))
+    if spaceIndex % gWidth != 0:
+        posMoves.append(swap_characters(puzzle, spaceIndex, spaceIndex-1))
+    # print(len(posMoves))
+    return posMoves
+parents = {}
+children = {}
+def BFS(start):
+    parseMe = [start]
+    dctSeen = {start: ""}
+    # i = 0
+    while parseMe:
+        # i += 1
+        # print(i)
+        # print("parseMe:", parseMe)
+        node = parseMe.pop(0)
+        if node not in children:
+            children[node] = []
+        if node not in parents:
+            parents[node] = []
+        for nbr in neighbors(node):
+            if (nbr in parents[node]): #check if the neighbor is just the parent of the node
+                continue
+            dctSeen[nbr] = node
+            parseMe.append(nbr)
+            if nbr not in parents:
+                parents[nbr] = []
+            if node not in parents[nbr]:
+                parents[nbr].append(node)
+            if node not in children:
+                children[node] = []
+            if nbr not in children[node]:
+                children[node].append(nbr)
+    return dctSeen
+
+dctSeen = BFS("_15427638")
+dctAnswer = {}
+for pzl in dctSeen:
+    parentCount = len(parents[pzl])
+    childCount = len(children[pzl])
+    if parentCount == 34:
+        print("pzl:", pzl)
+        print("parents", parents[pzl])
+    theKey = str(parentCount) + " " + str(childCount)
+    if theKey not in dctAnswer:
+        dctAnswer[theKey] = 1
+    else:
+        dctAnswer[theKey] += 1
+
+print(len(parents["12345678_"]), len(children["12345678_"]))
+#print(parents)
+#print(children)
+print("DONE")
+print(dctAnswer)
+def generateString(path):
+    if path == []:
+        return "X"
+    #print("path:", path)
+    lenPath = len(path)
+    str = ""
+    for i in range(0, lenPath-1):
+        str += calculate(path[i], path[i+1])
+    return str
+def calculate(pzl1, pzl2):
+    idx1 = pzl1.index("_")
+    idx2 = pzl2.index("_")
+    if idx2-idx1 == 1:
+        return "R"
+    elif idx2-idx1 == -1:
+        return "L"
+    elif idx2 > idx1:
+        return "D"
+    else: return "U"
