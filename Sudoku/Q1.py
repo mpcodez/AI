@@ -1,85 +1,94 @@
-n = 4
+n = int(input("Puzzle Size?: "))
 tiles = list(range(1, n+1))
 
-board = "abcde..hijklmnop"
-CHARS = "abcdefghijklmnop"
-possibleTiles = CHARS[:(n*n)]
+board = "."*(n*n)
+nums = list(range(1,n+1))
+TILES = [str(n) for i in range(n) for n in nums]
+
 
 def isValid(board):
-    print("------------------> CHECK ZERO PASSED")
-    for i in range(0, len(board), n):
-        tmp = [*board[i:i+n]]
-        if sorted(list(set(tmp))) != sorted(tmp):
-            return False
-    print("------------------> CHECK ONE PASSED")
-    for i in range(n):
-        tmp = []
-        for x in range(n):
-            tmp.append(board[i+(x*n)])
-        if sorted(list(set(tmp))) != sorted(tmp):
-            return False
-    print("------------------> CHECK TWO PASSED")
-    tmp = []
-    tmp2 = []
-
-    for i in range(n):
-        tmp.append(board[i+(i*n)])
-        tmp2.append(board[i+(n*(n-1-i))])
-    print("------------------> CHECK THREE PASSED")
-    if sorted(list(set(tmp))) != sorted(tmp):
-        return False
-    print("------------------> CHECK FOUR PASSED")
-    if sorted(list(set(tmp2))) != sorted(tmp2):
-        return False
-    print("------------------> CHECK FIVE PASSED")
     return True
+    """
+    if "." in board:
+
+    for row in range(n):
+        tmp = [board[i] for i in range(row*n, row*n + n)]
+        if collections.Counter(tmp) != collections.Counter(list(set(tmp))):
+            return False
+    
+    for i in range(col, n*n, n):
+        if board[i] == change:
+            return False
+    
+    if row == col:
+        for i in range(n):
+            if board[i*n + i] == change:
+                return False
+    
+    if row + col == n-1:
+        for i in range(n):
+            if board[(n-i)*n + i] == change:
+                return False
+            
+    """
+
 
 def isSolved(board):
-    return "." not in board
+    if "." in board:
+        return False
+    
+    return True
+
+def validMove(board, change):
+    pos = board.index(".")
+    row = pos//n
+    col = pos - (pos//n)*n
+
+    for i in range(row*n, row*n + n):
+        if board[i] == change:
+            return False
+    
+    for i in range(col, n*n, n):
+        if board[i] == change:
+            return False
+    
+    if row == col:
+        for i in range(n):
+            if board[i*n + i] == change:
+                return False
+    
+    if row + col == n-1:
+        for i in range(n):
+            if board[(n-i-1)*n + i] == change:
+                return False
+    
+    return True
 
 def choices(board):
-    ind = board.index(".")
-    tmp = {*possibleTiles}
-
-    for c in board[(ind//n)*n:(ind//n+1)*n]:
-        if c != ".":
-            tmp.discard(c)
+    retTiles = TILES.copy()
+    for b in board:
+        if b != ".":
+            retTiles.remove(b)
     
-    for i in range(n):
-        if board[ind//n+(i*n)] != ".":
-            tmp.discard(board[ind//n+(i*n)])
+    retSet = set()
+    pos = board.index(".")
 
-    if ind//n == ind-((ind//n)*n):
-        for i in range(n):
-            if board[i+(i*n)] != ".":
-                tmp.discard(board[i+(i*n)])
-    
-    if ind//n + ind-((ind//n)*n) == n-1:
-        for i in range(n):
-            if board[i+(n*(n-1-i))] != ".":
-                tmp.discard(board[i+(n*(n-1-i))])
+    for t in set(retTiles):
+        if validMove(board, t):
+            retSet.add(board[0:pos]+t+board[pos+1:])
 
-    ret = set()
-    for c in tmp:
-        ret.add(board[:ind] + c + board[ind+1:])
-    
-    return ret
+    return retSet
+
 
 def bruteForce(board):
-    if not isValid(board):
-        return ""
-    print("valid")
+    
     if isSolved(board):
         return board
-    print("not solved")
 
     chs = choices(board)
-    print("choices made")
 
     for choice in chs:
-        print(choice)
         bF = bruteForce(choice)
-        print(bF)
         if bF != "":
             return bF
     
@@ -87,5 +96,5 @@ def bruteForce(board):
 
 b = bruteForce(board)
 
-for i in range(0, len(b), n):
-    print(b[i:i+n]) 
+for i in range(n):
+    print(b[i*n:i*n+n])
