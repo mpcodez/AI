@@ -1,7 +1,9 @@
 n = int(input("Puzzle Size?: "))
+l = input("Puzzle?: ")
+
 tiles = list(range(1, n+1))
 
-board = "."*(n*n)
+board = "."*(n*n) if len(l) != n*n else l
 nums = list(range(1,n+1))
 TILES = [str(n) for i in range(n) for n in nums]
 
