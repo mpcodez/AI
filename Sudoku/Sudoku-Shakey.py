@@ -96,3 +96,19 @@ if __name__ == "__main__":
         count += 1
 
 # Medha Pappula, 6, 2026
+
+
+"""
+
+Ways to Improve:
+
+- Find Best Dot (expand max() comprehension), one with least amount of possible choices
+- Bail out of looping through choices if there is only 1 choice
+- Bail out of looping through all choices if first doesn't work, and there's only 2 choices
+
+- Possibles/Excluded: Create at the start, add used values as you go.
+    - Save all changes, don't create a deep copy, redo all changes
+    - Shallow Copy, newPsbl = [*psbl], create a deep copy only for the ones you change
+
+
+"""
