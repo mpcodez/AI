@@ -116,26 +116,29 @@ def constraint_propagation(state, dictionary):
     return state,dictionary
 
 def solve(state, dictionary, ones):
-    if "." not in state and check(state):
+    if check(state) == False:
+        return None
+    if "." not in state:
         return state
     if len(ones)==0:
         state,dictionary=constraint_propagation(state,dictionary)
-        if dictionary is None:
+        if dictionary is None or check(state) == False:
             return None
         if "." not in state:
             return state
             
     index = get_next_unassigned_variable(state, dictionary, ones)
     for symbol in dictionary[index]:
-        new_state = state[:index] + symbol + state[index + 1:]
-        new_dict=dictionary.copy()
-        new_dict[index]=""
-        new_dict, new_ones = forward_look(state, new_dict, index, symbol, ones.copy())
-        if new_dict is not None:
-
-            result = solve(new_state, new_dict, new_ones)
-            if result is not None:
-                return result
+        if is_valid(state, index, symbol):
+            new_state = state[:index] + symbol + state[index + 1:]
+            new_dict=dictionary.copy()
+            new_dict[index]=""
+            new_dict, new_ones = forward_look(state, new_dict, index, symbol, ones.copy())
+            if new_dict is not None:
+                result = solve(new_state, new_dict, new_ones)
+                if result is not None:
+                    return result
+    
     return None
 
 def check(board):
@@ -180,9 +183,8 @@ if __name__ == "__main__":
         
         startTime = time.time()
         
-        if check(board):
-            dictionary, ones = populate(board)
-            solution = solve(board, dictionary, ones)
+        dictionary, ones = populate(board)
+        solution = solve(board, dictionary, ones)
         
         print(f"{count}: {board}")
         spaces = " "*len(str(count) + ": ")
