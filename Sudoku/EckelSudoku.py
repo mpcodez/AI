@@ -225,7 +225,7 @@ def check(board):
     return True
 
 if __name__ == "__main__":
-    puzzles = open("test.txt")
+    puzzles = open(args[0]).read().split("\n")
 
     count = 1
 
