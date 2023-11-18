@@ -196,7 +196,33 @@ if __name__ == "__main__":
 """
 Again, but not again :(
 
+def bruteForce():
+- find list of choices by way of best dot
+if no bail out (number of choices > 1)
+    All sym in SYMSET:
+        determine possible positions for each symbol in List Of Constraint Sets
+        if possible positions for sym < lstOfChoices: #we have something better
+            update LstOfChoices #use the symbol instead of a dot
 
-- 
+
+Improvements:
+    - Best Dot: dot that has the least possible options for symbols
+    - Best Symbol: symbol that has the least amount of indicies(positions) as to where it could possibly be in a CONSTRAINT SET
+    - Naked Pairs:
+    - incrementeal programming
+    - lookup tables
+    - buckets
+
+Naked Pairs:
+    - find two cells in the same constraint set with same TWO (2) options
+    - elimate both options from all other constraint sets
+
+def bruteForce(puzzle):
+    pos = findBestDot(puzzle)
+    if possible symbols for that position doesn't have length 1:
+        sym = findBestSymbol(puzzle)
+        if Best symbols not 1:
+            nakedPairs()
+
 
 """

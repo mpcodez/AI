@@ -1,11 +1,9 @@
-import math
+import sys; args = sys.argv[1:]
 import time
 
 INP = ""
 PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS = None, None, None, None, None
 TOFILL = {}
-CNT = 0
-ONES = set()
 
 def setGlobals(board):
     global PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, TOFILL
@@ -40,7 +38,6 @@ def setGlobals(board):
     CSTRS = rowcstr + colcstr + subcstr
     NBRS = [set().union(*[cset for cset in CSTRS if n in cset]) - {n} for n in range(PZLSIZE)]
     psbl = {index: (SYMSET - {INP[n] for n in NBRS[index]}) if INP[index] == '.' else set() for index in range(PZLSIZE)}
-    ONES = {index for index in TOFILL if len(psbl[index]) == 1}
     TOFILL = {index for index, value in enumerate(board) if value == '.'}
     return psbl
 
@@ -60,46 +57,16 @@ def fowardLooking(pzl, indSyms, pos, sym):
             continue
         if nbr in indSyms:
             newIndSyms[nbr].discard(sym)
-    newIndSyms[pos] = set()
+    del newIndSyms[pos]
     TOFILL.discard(pos)
     return pzl[:pos] + sym + pzl[pos + 1:], newIndSyms
 
 
-def constraintProp(pzl, indSyms):
-    global TOFILL
-    new_syms = {p: {s for s in indSyms[p]} for p in indSyms}
-    newPZL = pzl
-    changed = set()
-    for cs in CSTRS:
-        tmp = list(cs)
-        objects = [newPZL[index] for index in tmp]
-        for symbol in SYMSET:
-            if symbol not in objects:
-                present = [symbol in new_syms[index] for index in tmp]
-                if present.count(True) == 0:
-                    TOFILL = TOFILL.union(changed)
-                    return pzl, indSyms, None
-                if present.count(True) == 1:
-                    index = tmp[present.index(True)]
-                    newPZL = newPZL[:index] + symbol + newPZL[index + 1:]
-                    new_syms[index] = set()
-                    changed.add(index)
-                    TOFILL.discard(index)
-
-    return newPZL, new_syms, changed
-
 def solve(pzl, indSyms):
     global TOFILL
 
-    if "." not in pzl:
+    if "." not in pzl or not indSyms:
         return pzl
-    
-    if indSyms == None:
-        return None
-    
-
-    pzl, indSyms, changed = constraintProp(pzl, indSyms)
-    
 
     pos = getBestPos(indSyms)
 
@@ -110,18 +77,23 @@ def solve(pzl, indSyms):
             return result
         else:
             TOFILL.add(pos)
+    return ""
 
-    if changed is not None:
-        TOFILL = TOFILL.union(changed)
-    return None
+if __name__ == "__main__":
+    puzzles = open(args[0]).read().split("\n")
 
-board = "....5.6.1.....4..5..8.........4.7.2..6......3.....8...15.........2....7........8."
-INP = board
-sT = time.time()
-possibles = setGlobals(board)
-sol = solve(board, possibles)
-#print(check(sol))
-print(sol)
-print((time.time()-sT))
-print(checkSum(sol))
-print(CNT)
+    count = 1
+
+    for board in puzzles:
+        
+        startTime = time.time()
+        INP = board
+        possibles = setGlobals(board)
+        solution = solve(board, possibles)
+        
+        print(f"{count}: {board}")
+        spaces = " "*len(str(count) + ": ")
+        print(f"{spaces}{solution} {checkSum(solution)} {round(time.time() - startTime, 2)}s")
+        count += 1
+
+# Medha Pappula, 6, 2026
