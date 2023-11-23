@@ -1,56 +1,102 @@
-def print_sudoku(sudoku_str):
-    for i in range(9):
-        for j in range(9):
-            print(sudoku_str[i * 9 + j], end=" ")
-        print()
+import time
 
-def is_valid_move(sudoku_str, row, col, num):
-    # Check if the number is not present in the same row, column, or block
-    return (
-        all(num != int(sudoku_str[row * 9 + j]) for j in range(9))
-        and all(num != int(sudoku_str[i * 9 + col]) for i in range(9))
-        and all(
-            num != int(sudoku_str[i * 9 + j])
-            for i in range(row - row % 3, row - row % 3 + 3)
-            for j in range(col - col % 3, col - col % 3 + 3)
-        )
-    )
+INP = ""
+PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS = None, None, None, None, None
+TOFILL = {}
 
-def solve_sudoku(sudoku_str):
-    empty = sudoku_str.find('.')
-    if empty == -1:
-        return sudoku_str  # Puzzle is solved
+def setGlobals(board):
+    global PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, TOFILL
+    INP = board
+    pzl = ''.join([n for n in board if n != '.'])
 
-    row, col = divmod(empty, 9)
+    PZLSIZE = len(INP)
+    CSTRSIZE = int(len(INP) ** .5)
+    N = PZLSIZE ** .5
 
-    for num in map(str, range(1, 10)):
-        if is_valid_move(sudoku_str, row, col, int(num)):
-            new_sudoku = sudoku_str[:empty] + num + sudoku_str[empty + 1:]
-            solution = solve_sudoku(new_sudoku)
+    subheight = -1
+    i = int(N ** .5)
+    while i < N and subheight == -1:
+        if N % i == 0:
+            subheight = i
+        i += 1
+    subwidth = int(N // subheight)
 
-            if solution:
-                return solution  # If the current move leads to a solution, return the solution
+    SYMSET = {*pzl} - {'.'}
+    if len(SYMSET) != CSTRSIZE:
+        otherSyms = [n for n in '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0']
+        while len(SYMSET) < CSTRSIZE:
+            SYMSET.add(otherSyms.pop(0))
 
-    return None  # No valid moves, backtrack further
+    rowcstr = [{index for index in range(row * CSTRSIZE, (row + 1) * CSTRSIZE)}
+               for row in range(CSTRSIZE)]
+    colcstr = [{index for index in range(col, col + PZLSIZE - subwidth * subheight + 1, subwidth * subheight)}
+               for col in range(CSTRSIZE)]
+    subcstr = [{boxRow + boxColOffset + subRow * CSTRSIZE + subCol
+                for subRow in range(subheight) for subCol in range(subwidth)}
+               for boxRow in range(0, PZLSIZE, subheight * CSTRSIZE) for boxColOffset in range(0, CSTRSIZE, subwidth)]
+    CSTRS = rowcstr + colcstr + subcstr
+    NBRS = [set().union(*[cset for cset in CSTRS if n in cset]) - {n} for n in range(PZLSIZE)]
+    psbl = {index: (SYMSET - {INP[n] for n in NBRS[index]}) if INP[index] == '.' else set() for index in range(PZLSIZE)}
+    TOFILL = {index for index, value in enumerate(board) if value == '.'}
+    return psbl
 
-def apply_advanced_strategies(sudoku_str):
-    while True:
-        # Apply advanced strategies here
+def checkSum(pzl):
+    if SYMSET == {*"123456789"}:
+        return 324
+    return sum(ord(n) for n in pzl) - (PZLSIZE) * min(ord(n) for n in SYMSET)
 
-        # Break the loop if no changes are made
-        if sudoku_str == new_sudoku_str:
-            break
+def getBestPos(indSyms):
+    global TOFILL
+    return min(TOFILL, key=lambda pos: len(indSyms[pos]))
 
-    return sudoku_str
+def fowardLooking(pzl, indSyms, pos, sym):
+    newIndSyms = {p: {s for s in indSyms[p]} for p in indSyms}
+    for nbr in NBRS[pos]:
+        if nbr not in indSyms and pzl[nbr] == sym:
+            continue
+        if nbr in indSyms:
+            newIndSyms[nbr].discard(sym)
+    del newIndSyms[pos]
+    TOFILL.discard(pos)
+    return pzl[:pos] + sym + pzl[pos + 1:], newIndSyms
 
-# Example Sudoku puzzle in the form of a string
-sudoku_str = "...5..2..4......8....1........6..1.57...3..........9...2...8.3..1..7......5......"
 
-# Apply advanced strategies to the Sudoku string
-sudoku_str = apply_advanced_strategies(sudoku_str)
+def solve(pzl, indSyms):
+    global TOFILL
 
-# Solve the Sudoku puzzle
-solution = solve_sudoku(sudoku_str)
+    if "." not in pzl or not indSyms:
+        return pzl
 
-# Print the solved Sudoku puzzle
-print_sudoku(solution)
+    pos = getBestPos(indSyms)
+
+    for sym in indSyms[pos]:
+        newPzl, newIndSyms = fowardLooking(pzl, indSyms, pos, sym)
+        result = solve(newPzl, newIndSyms)
+        if result:
+            return result
+        else:
+            TOFILL.add(pos)
+    return ""
+
+def check(pzl):
+    for c in CSTRS:
+        valSet = {pzl[n] for n in c if pzl[n] != "."}
+        valList = [pzl[n] for n in c if pzl[n] != "."]
+        if len(valSet) != len(valList):
+            return False
+    
+    return True
+
+board = ".6.571....43...2...5.....962.58...1....9.3....1...28.358.....4...1...65....325.8."
+startTime = time.time()
+INP = board
+possibles = setGlobals(board)
+solution = solve(board, possibles)
+count = 1
+print(f"{count}: {board}")
+spaces = " "*len(str(count) + ": ")
+print(f"{spaces}{solution} {checkSum(solution)} {round(time.time() - startTime, 2)}s")
+
+
+print(check("962571438143698275758234196235864914674913524419752863586119342321487659494325187"))
+# Medha Pappula, 6, 2026

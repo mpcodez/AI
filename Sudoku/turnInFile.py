@@ -79,6 +79,15 @@ def solve(pzl, indSyms):
             TOFILL.add(pos)
     return ""
 
+def check(pzl):
+    for c in CSTRS:
+        valSet = {pzl[n] for n in c if pzl[n] != "."}
+        valList = [pzl[n] for n in c if pzl[n] != "."]
+        if len(valSet) != len(valList):
+            return False
+    
+    return True
+
 if __name__ == "__main__":
     puzzles = open(args[0]).read().split("\n")
 

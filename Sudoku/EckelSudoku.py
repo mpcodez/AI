@@ -5,7 +5,6 @@ INP = ""
 PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS = None, None, None, None, None
 TOFILL = {}
 CNT = 0
-ONES = set()
 
 def setGlobals(board):
     global PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, TOFILL
@@ -53,20 +52,52 @@ def getBestPos(indSyms):
     global TOFILL
     return min(TOFILL, key=lambda pos: len(indSyms[pos]))
 
-def fowardLooking(pzl, indSyms, pos, sym):
-    newIndSyms = {p: {s for s in indSyms[p]} for p in indSyms}
-    for nbr in NBRS[pos]:
-        if nbr not in indSyms and pzl[nbr] == sym:
+def getBestSym(pzl, ind, indSyms):
+    minCNT = 100
+    bstSym = ""
+    for s in indSyms[ind]:
+        cnt = True
+        tmp = 0
+        for nbr in NBRS[ind]:
+            if pzl[ind] == s or cnt == False:
+                tmp = 100
+                cnt = False
+                continue
+            if s in indSyms[nbr]:
+                tmp += 1
+        if cnt == False:
+            print(s)
             continue
-        if nbr in indSyms:
-            newIndSyms[nbr].discard(sym)
+        if tmp < minCNT:
+            bstSym = s
+    
+    return bstSym
+
+def fowardLooking(pzl, indSyms, pos, sym):
+    global CNT
+    newIndSyms = {p: {s for s in indSyms[p]} for p in indSyms}
     newIndSyms[pos] = set()
-    TOFILL.discard(pos)
+    for ind in NBRS[pos]:
+        a = newIndSyms[ind]
+        if sym in a:
+            a = a - {sym}
+            if len(a) == 0:
+                return None, None
+            newIndSyms[ind] = a
+            TOFILL.discard(pos)  # Move this line inside the loop
+
+    
+    if CNT < 20:
+        print("FORWARD: ", pzl[:pos] + "      " + sym + "      " + pzl[pos + 1:])
+        s = "793852641621374895548196237315467928864921753279538416157289364482613579936745182"
+        print("FORWARD: ", s[:pos] + "      " + s[pos] + "      " + s[pos+1:])
+        CNT += 1
+    
     return pzl[:pos] + sym + pzl[pos + 1:], newIndSyms
 
 
 def constraintProp(pzl, indSyms):
-    global TOFILL
+    global TOFILL, CNT
     new_syms = {p: {s for s in indSyms[p]} for p in indSyms}
     newPZL = pzl
     changed = set()
@@ -86,24 +117,41 @@ def constraintProp(pzl, indSyms):
                     changed.add(index)
                     TOFILL.discard(index)
 
+                    if CNT < 20:
+                        print("CONST: ", pzl[:index] + "      " + symbol + "      " + pzl[index + 1:])
+                        s = "793852641621374895548196237315467928864921753279538416157289364482613579936745182"
+                        print("CONST: ", s[:index] + "      " + s[index] + "      " + s[index+1:])
+                        CNT += 1
+
+    
     return newPZL, new_syms, changed
+
+
+def check(pzl):
+    for c in CSTRS:
+        valSet = {pzl[n] for n in c if pzl[n] != "."}
+        valList = [pzl[n] for n in c if pzl[n] != "."]
+        if len(valSet) != len(valList):
+            return False
+    
+    return True
 
 def solve(pzl, indSyms):
     global TOFILL
 
-    if "." not in pzl:
-        return pzl
-    
     if indSyms == None:
         return None
     
-
+    if "." not in pzl:
+        return pzl
+    
+    changed = None
     pzl, indSyms, changed = constraintProp(pzl, indSyms)
     
 
     pos = getBestPos(indSyms)
 
-    for sym in indSyms[pos]:
+    for sym in list(indSyms[pos]):
         newPzl, newIndSyms = fowardLooking(pzl, indSyms, pos, sym)
         result = solve(newPzl, newIndSyms)
         if result:
@@ -120,8 +168,6 @@ INP = board
 sT = time.time()
 possibles = setGlobals(board)
 sol = solve(board, possibles)
-#print(check(sol))
 print(sol)
 print((time.time()-sT))
 print(checkSum(sol))
-print(CNT)
