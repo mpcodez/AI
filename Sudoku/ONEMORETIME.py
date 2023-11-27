@@ -1,7 +1,7 @@
 import time
 
-
 PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, CSBYIN, PSBL, TOFILL = None, None, None, None, None, None, None, None
+CNT = 0
 
 def setGlobals(board):
     global PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, CSBYIN, PSBL, TOFILL
@@ -35,7 +35,6 @@ def setGlobals(board):
                for boxRow in range(0, PZLSIZE, subheight * CSTRSIZE) for boxColOffset in range(0, CSTRSIZE, subwidth)]
     
     CSTRS = rowcstr + colcstr + subcstr
-
     CSBYIN = [[cset-{n} for cset in CSTRS if n in cset] for n in range(PZLSIZE)]
     NBRS = [set().union(*[cset for cset in CSTRS if n in cset]) - {n} for n in range(PZLSIZE)]
     PSBL = {index: (SYMSET - {INP[n] for n in NBRS[index]}) if INP[index] == '.' else set() for index in range(PZLSIZE)}
@@ -81,41 +80,77 @@ def forward(board):
     for index in TOFILL:
         if len(PSBL[index]) == 1:
             ones.enqueue(index)
-
     
-    
+    newPSBL = {p: {s for s in PSBL[p]} for p in PSBL}
+    newBoard = board
+    tmpFILL = {t for t in TOFILL}
     while not ones.is_empty():
         cur = ones.dequeue()
-        sym = PSBL[cur].pop()
-        newPSBL = {p: {s for s in PSBL[p]} for p in PSBL}
+        if cur not in tmpFILL:
+            continue
+        sym = newPSBL[cur].pop()
 
         for nbr in NBRS[cur]:
-            a = newPSBL[nbr] - {sym}
-            if len(a) == 0:
-                return None
-            if len(a) == 1:
-                ones.enqueue(nbr)
-            newPSBL[nbr] = a
+            if nbr in tmpFILL:
+                a = newPSBL[nbr] - {sym}
+                if len(a) == 0:
+                    return None
+                if len(a) == 1:
+                    ones.enqueue(nbr)
+                newPSBL[nbr] = a
+            
+        newBoard = newBoard[:cur] + sym + newBoard[cur+1:]
+        tmpFILL = tmpFILL - {cur}
 
-        PSBL = newPSBL
-        board = board[:cur] + sym + board[cur+1:]
-        TOFILL = TOFILL - {cur}
+    PSBL = newPSBL
+    TOFILL = tmpFILL
+    return newBoard
 
-    return board
-
-"""
 def propagate_helper(board, con):
-    for c in con:
-        for char in PSBL[c]:
-            if char only appears once, place it
+    global PSBL, TOFILL, CNT
+    
+    new_board = board
+
+    obj = {board[x] for x in con} - {"."}
+    constraint = list(con)
+
+    for char in SYMSET:
+        if char not in obj:
+            present = [char in PSBL[ind] for ind in constraint]
+            val = present.count(True)
+            
+            if val == 0:
+                return None
+            
+            if val == 1:
+                index = constraint[present.index(True)]
+                new_board = new_board[:index] + char + new_board[index + 1:]
+                
+                CNT += 1
+                PSBL[index] = set()
+                for nbr in NBRS[index]:
+                    PSBL[nbr] = PSBL[nbr] - {char}
+                TOFILL.remove(index)
+
+    
     return new_board
 
 def propagate(board):
-    call propagate helper 3 times, passing board and each different constraint set, returning none if none is returned
-    return forward(board)
-"""
+    global PSBL, CNT, TOFILL
 
-def get_next(board):
+    nBoard = board
+    newPSBL = {p: set(PSBL[p]) for p in PSBL}
+    tmpFILL = {t for t in TOFILL}
+    for cs in CSTRS:
+        nBoard = propagate_helper(nBoard, cs)
+        if nBoard is None:
+            PSBL = newPSBL
+            TOFILL = tmpFILL
+            return None
+    
+    return forward(nBoard)
+
+def get_next():
     global TOFILL, PSBL
     return min(TOFILL, key=lambda pos: len(PSBL[pos]))
 
@@ -136,47 +171,58 @@ def getBest(board, ind):
     lst = sorted(lst)
     return lst
 
-
-def check(pzl):
-
-    for c in CSTRS:
-        valSet = {pzl[n] for n in c if pzl[n] != "."}
-        valList = [pzl[n] for n in c if pzl[n] != "."]
-        if len(valSet) != len(valList):
-            return False
-    
-    return True
-
 def backtracking(board):
-    global TOFILL
+    global TOFILL, PSBL, CNT
 
-    if not check(board):
-        return None
-    
     if "." not in board:
         return board
-    
 
-    var = get_next(board)
-    syms = getBest(board, var)
+    index = get_next()
+    syms = getBest(board, index)
 
     for n, val in syms:
-        new_board = board[:var] + val + board[var+1:]
-        psbles = PSBL[var] - {val}
-        PSBL[val] = set()
-        TOFILL = TOFILL - {var}
+        new_board = board[:index] + val + board[index+1:]
+        backup = {p: {s for s in PSBL[p]} for p in PSBL}
+
+        psbles = PSBL[index] - {val}
+        tmpFILL = {t for t in TOFILL}
+        PSBL[index] = set()
+        TOFILL = TOFILL - {index}
         
-        new_board2 = forward(new_board)
-        if new_board2 == None:
-            TOFILL.add(var)
-            PSBL[val] = psbles
+        ck = False
+        for nbr in NBRS[index]:
+            a = PSBL[nbr] - {val}
+            if len(a) == 0 and nbr in TOFILL:
+                ck = True
+                continue
+            PSBL[nbr] = a
+            
+        if ck:
+            TOFILL = tmpFILL
+            PSBL = backup
+            PSBL[index] = psbles
             continue
 
+        new_board11 = propagate(new_board)
+        if new_board11 == None:
+            TOFILL = tmpFILL
+            PSBL = backup
+            PSBL[index] = psbles
+            new_board11 = new_board
+
+        new_board2 = forward(new_board11)
+        if new_board2 == None:
+            TOFILL = tmpFILL
+            PSBL = backup
+            PSBL[index] = psbles
+            continue
+        
         new_board3 = backtracking(new_board2)
 
         if new_board3 == None:
-            TOFILL.add(var)
-            PSBL[val] = psbles
+            TOFILL = tmpFILL
+            PSBL = backup
+            PSBL[index] = psbles
             continue
         
         return new_board3
@@ -184,9 +230,25 @@ def backtracking(board):
     return None
 
 sT = time.time()
-board = "...9....8.4.2189...3....72.3.4.......2.....9.......5.2.67....1...8147.3.4....2..."
+board = ".6...1.4....2..7............5..64...3.....8......1....7.83............152........"
 setGlobals(board)
 s = backtracking(board)
 print(s)
-print(s == "958761324721943856436825179684132597517496238392587461145279683873654912269318745")
+print(s == "963781542581249736472635189157864923394527861826913457718352694639478215245196378")
 print((time.time()-sT))
+
+stR = ""
+for x in range(len(s)):
+    if s[x] == "963781542581249736472635189157864923394527861826913457718352694639478215245196378"[x]:
+        stR += s[x]
+    else:
+        stR += " "
+
+print(stR)
+#...9....8.4.2189...3....72.3.4.......2.....9.......5.2.67....1...8147.3.4....2...
+
+"""
+20: 9....1.....1943.5..36....7.......5.7.1.....3.3.2.......4....68..7.6549.....3....5
+    958761324721943856436825179684132597517496238392587461145279683873654912269318745 324 1.2s
+
+"""
