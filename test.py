@@ -1,243 +1,139 @@
 import time
 
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-        self.prev = None
+# input
+INPUTLIST = ["18 18 1X9 8x5 1 9 8X18 2x13 4X10"]
 
-class Queue:
-    def __init__(self):
-        self.head = None
-        self.tail = None
+INPUT = ' '.join(INPUTLIST).replace('x', ' ').replace('X', ' ').split(' ')
+# input should be all numbers individually regardless of if separated by x or space
 
-    def enqueue(self, item):
-        new_node = Node(item)
-        if self.tail is None:
-            self.head = self.tail = new_node
-        else:
-            self.tail.next = new_node
-            new_node.prev = self.tail
-            self.tail = new_node
+# take input and create board and blocks
+BOARDW, BOARDH = int(INPUT[1]), int(INPUT[0]) # board width and height
+START = {y: ''.join(['.' for n in range(BOARDW)]) for y in range(BOARDH)}
+        # dict w/ y as key and string as value
+BLOCKS = {int(index/2): (INPUT[index], INPUT[index + 1]) for index in range(2, len(INPUT), 2)}
+        # set of blocks represented by (width, height)
+replace = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+CHOICES = {key: replace[key] for key in BLOCKS}
 
-    def dequeue(self):
-        if self.is_empty():
-            return None
-        item = self.head.data
-        if self.head == self.tail:
-            self.head = self.tail = None
-        else:
-            self.head = self.head.next
-            self.head.prev = None
-        return item
 
-    def is_empty(self):
-        return self.head is None
+# helper methods:
 
-def setGlobals(board):
-    global PZLSIZE, CSTRSIZE, CSTRS, SYMSET, NBRS, CSBYIN, PSBL, TOFILL
-    INP = board
-    pzl = ''.join([n for n in board if n != '.'])
+# one time calls:
+def areaAddsUp(boardw, boardh, blx): # to check if impossible before trying to solve
+    totalArea = boardw*boardh
+    blockArea = sum([int(blx[key][0])*int(blx[key][1]) for key in blx])
+    if totalArea != blockArea:
+        return False
+    return True
 
-    PZLSIZE = len(INP)
-    CSTRSIZE = int(len(INP) ** .5)
-    N = PZLSIZE ** .5
 
-    subheight = -1
-    i = int(N ** .5)
-    while i < N and subheight == -1:
-        if N % i == 0:
-            subheight = i
-        i += 1
-    subwidth = int(N // subheight)
+def printBoard(board):
+    for key in board: # print each row
+        print(' '.join(board[key])) # characters separated by a space
+    if BOARDW > 30 or BOARDH > 30:
+        print('\n') # if its a big puzzle leave more space around it
+    else:
+        print('')
 
-    SYMSET = {*pzl} - {'.'}
-    if len(SYMSET) != CSTRSIZE:
-        otherSyms = [n for n in '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0']
-        while len(SYMSET) < CSTRSIZE:
-            SYMSET.add(otherSyms.pop(0))
 
-    rowcstr = [{index for index in range(row * CSTRSIZE, (row + 1) * CSTRSIZE)}
-               for row in range(CSTRSIZE)]
-    colcstr = [{index for index in range(col, col + PZLSIZE - subwidth * subheight + 1, subwidth * subheight)}
-               for col in range(CSTRSIZE)]
-    subcstr = [{boxRow + boxColOffset + subRow * CSTRSIZE + subCol
-                for subRow in range(subheight) for subCol in range(subwidth)}
-               for boxRow in range(0, PZLSIZE, subheight * CSTRSIZE) for boxColOffset in range(0, CSTRSIZE, subwidth)]
-    
-    CSTRS = rowcstr + colcstr + subcstr
-    CSBYIN = [[cset-{n} for cset in CSTRS if n in cset] for n in range(PZLSIZE)]
-    NBRS = [set().union(*[cset for cset in CSTRS if n in cset]) - {n} for n in range(PZLSIZE)]
-    PSBL = {index: (SYMSET - {INP[n] for n in NBRS[index]}) if INP[index] == '.' else set() for index in range(PZLSIZE)}
-    TOFILL = {index for index, value in enumerate(board) if value == '.'}
+def output(board):
+    if board == False:
+        return 'Impossible'
 
-def forward(board):
-    global PSBL, TOFILL
-    ones = Queue()
-    for index in TOFILL:
-        if len(PSBL[index]) == 1:
-            ones.enqueue(index)
-    
-    newPSBL = {p: {s for s in PSBL[p]} for p in PSBL}
-    newBoard = list(board)
-    tmpFILL = {t for t in TOFILL}
-    while not ones.is_empty():
-        cur = ones.dequeue()
-        if cur not in tmpFILL:
-            continue
-        sym = newPSBL[cur].pop()
+    seen = set()
+    output = []
+    reverseChoices = {CHOICES[key]:key for key in CHOICES}
+    # reverse to take string value representing piece id and get the int id
+    # made some of them letters because it looked nicer printing than 2-digit numbers
+    # not actually necessary but don't think it makes a huge difference?
 
-        for nbr in NBRS[cur]:
-            if nbr in tmpFILL:
-                a = newPSBL[nbr] - {sym}
-                if len(a) == 0:
-                    return None
-                if len(a) == 1:
-                    ones.enqueue(nbr)
-                newPSBL[nbr] = a
-            
-        newBoard[cur] = sym
-        tmpFILL.remove(cur)
+    for key in board: # for each row
+        for index in range(len(board[key])): # check label of index
+            row = board[key]
+            label = row[index]
+            if label in seen: # if you've already seen it whatever
+                continue
+            seen.add(label) # otherwise add to seen
+            height, width = BLOCKS[int(reverseChoices[label])] # get the h/w if its block
 
-    PSBL = newPSBL
-    TOFILL = tmpFILL
-    return ''.join(newBoard)
+            if index + int(width) - 1 == row.rfind(label):
+                # if the last occurrence of the label is at the index + width
+                output.append('{}x{}'.format(height, width)) # add h, w to output
+            else:
+                # otherwise put it in as w, h
+                output.append('{}x{}'.format(width, height))
+    return output
 
-def propagate_helper(board, con):
-    global PSBL, TOFILL, CNT
-    
-    new_board = list(board)
 
-    obj = {board[x] for x in con} - {"."}
-    constraint = list(con)
+def solve(board, currentRow, choices):
+    if areaAddsUp(BOARDH, BOARDW, BLOCKS):
+        return output(solve1(board, currentRow, choices))
+    else:
+        return 'Impossible'
 
-    for char in SYMSET:
-        if char not in obj:
-            present = [char in PSBL[ind] for ind in constraint]
-            val = present.count(True)
-            
-            if val == 0:
-                return None
-            
-            if val == 1:
-                index = constraint[present.index(True)]
-                new_board[index] = char
-                PSBL[index] = set()
-                for nbr in NBRS[index]:
-                    PSBL[nbr] = PSBL[nbr] - {char}
-                TOFILL.remove(index)
 
-    return ''.join(new_board)
+# repeatedly called
+def canAdd(width, height, topLeftCorner, board):
+    x, y = topLeftCorner
+    if (x + width) > BOARDW: # if adding block goes off the board width
+        return False
+    elif (y + height) > BOARDH: # if adding block goes off the board height
+        return False
+    elif board[y][x:x + width].count('.') < width: # if there is overlap
+        return False
+    return True
 
-def propagate(board):
-    global PSBL, CNT, TOFILL
 
-    nBoard = board
-    newPSBL = {p: set(PSBL[p]) for p in PSBL}
-    tmpFILL = {t for t in TOFILL}
-    for cs in CSTRS:
-        nBoard = propagate_helper(nBoard, cs)
-        if nBoard is None:
-            PSBL = newPSBL
-            TOFILL = tmpFILL
-            return None
-    
-    return forward(nBoard)
+def addBlock(height, width, blockNum, topLeftCorner, board): # height, width, block id, location, board
+    x, y = topLeftCorner # column/row
+    marker = CHOICES[blockNum] # id to denote puzzle
 
-def get_next():
-    global TOFILL, PSBL
-    return min(TOFILL, key=lambda pos: len(PSBL[pos]))
+    # check if possible to add block:
+    if canAdd(width, height, topLeftCorner, board): # if it is possible to add, add it
+        boardCopy = board.copy() # copy necessary because it's a dict
+        for dep in range(y, y + height): # modify each row
+            boardCopy[dep] = board[dep][0:x] + marker*width + board[dep][x + width:]
+        return boardCopy
 
-def getBest(board, ind):
-    global PSBL
-    lst = []
+    return False # if the block doesn't fit in this space
 
-    for p in PSBL[ind]:
-        tmp = 0
-        for i in NBRS[ind]:
-            if board[i] == p:
-                tmp = 1000000000000
-                break
-            if p in PSBL[i]:
-                tmp += 1
-        lst.append((tmp, p))
-    
-    lst = sorted(lst)
-    return lst
 
-def backtracking(board):
-    global TOFILL, PSBL, CNT
-
-    if "." not in board:
+# method to search for puzzle solution:
+def solve1(board, currentRow, choices):
+    if '.' not in board[BOARDH - 1]: # if the bottom row is filled then its solved
         return board
 
-    index = get_next()
-    syms = getBest(board, index)
-
-    for n, val in syms:
-        new_board = list(board)
-        new_board[index] = val
-        backup = {p: {s for s in PSBL[p]} for p in PSBL}
-
-        psbles = PSBL[index] - {val}
-        tmpFILL = {t for t in TOFILL}
-        PSBL[index] = set()
-        TOFILL.remove(index)
-        
-        ck = False
-        for nbr in NBRS[index]:
-            a = PSBL[nbr] - {val}
-            if len(a) == 0 and nbr in TOFILL:
-                ck = True
-                continue
-            PSBL[nbr] = a
-            
-        if ck:
-            TOFILL = tmpFILL
-            PSBL = backup
-            PSBL[index] = psbles
-            continue
-
-        new_board11 = propagate(''.join(new_board))
-        if new_board11 is None:
-            TOFILL = tmpFILL
-            PSBL = backup
-            PSBL[index] = psbles
-            new_board11 = ''.join(new_board)
-
-        new_board2 = forward(new_board11)
-        if new_board2 is None:
-            TOFILL = tmpFILL
-            PSBL = backup
-            PSBL[index] = psbles
-            continue
-        
-        new_board3 = backtracking(new_board2)
-
-        if new_board3 is None:
-            TOFILL = tmpFILL
-            PSBL = backup
-            PSBL[index] = psbles
-            continue
-        
-        return new_board3
-    
-    return None
-
-sT = time.time()
-board = ".6...1.4....2..7............5..64...3.....8......1....7.83............152........"
-setGlobals(board)
-solution = backtracking(board)
-print(solution)
-print((time.time()-sT))
-
-print(solution == "963781542581249736472635189157864923394527861826913457718352694639478215245196378")
-
-stR = ""
-for x in range(len(solution)):
-    if solution[x] == "963781542581249736472635189157864923394527861826913457718352694639478215245196378"[x]:
-        stR += solution[x]
+    if '.' in board[currentRow]: # if there's an empty space in current row its topleft
+        nextOpenIndex = board[currentRow].find('.')
     else:
-        stR += " "
+        while '.' not in board[currentRow]: # otherwise find row with empty space
+            currentRow += 1
+        nextOpenIndex = board[currentRow].find('.')
 
-print(stR)
+    for choice in choices:
+        newChoices = choices.copy()
+        newChoices.pop(choice) # copy of choices without choice
+        height, width = int(BLOCKS[choice][0]), int(BLOCKS[choice][1])
+
+        for rotation in range(2):
+            if rotation == 0:
+                newBoard = addBlock(height, width, choice,
+                                    (nextOpenIndex, currentRow), board) # create board with added block
+                if newBoard: # if it's actually made it's valid so pass it on
+                    result = solve1(newBoard, currentRow, newChoices)
+                    if result:
+                        return result
+
+            if height != width and rotation == 1: # if its not a square try rotating
+                width, height = int(BLOCKS[choice][0]), int(BLOCKS[choice][1])
+                newBoard = addBlock(height, width, choice,
+                                    (nextOpenIndex, currentRow), board)
+                if newBoard:
+                    result = solve1(newBoard, currentRow, newChoices)
+                    if result:
+                        return result
+    return False # no solution
+
+
+# output
+print(solve(START, 0, CHOICES))
