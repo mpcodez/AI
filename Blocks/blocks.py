@@ -1,6 +1,10 @@
-blocks = ["17x10 10X17", "17X3 13x3 3 4"]
+import sys; args = sys.argv[1:]
 
-def decompose(pieces):
+global AREA
+AREA = 0
+
+def setup(pieces):
+    global AREA
 
     items = []
     tmp = ""
@@ -29,54 +33,105 @@ def decompose(pieces):
 
     for i in items:
         tmp = i.split("X")
-        for x in range(2):
-            tmp[x] = int(tmp[x])
-        blocks.append((max(tmp), min(tmp)))
+        blocks.append((int(tmp[0]), int(tmp[1])))
 
     board = blocks[0]
     blocks = blocks[1:]
 
-    if board == blocks[0]:
-        return f"Decomposition: {blocks[0][0]}, {blocks[0][1]}"
+    blocks = sorted(blocks, key=area, reverse=True)
+
+    if AREA > board[0]*board[1]:
+        return None, None, None
+
+    while AREA != board[0]*board[1]:
+        blocks.append((1, 1))
+        AREA += 1
+
+    return board[0], board[1], blocks
+
+def area(a):
+    global AREA
+    v = a[0]*a[1]
+    AREA += v
+    return v
+
+def place_piece(filled,height,width):
+
+    index = filled.index(" ")
+    if index % puzzle_width + width > puzzle_width: #no space on right
+        return None,None
+    if index // puzzle_width + height > puzzle_height: #no space on bottom
+        return None,None
+    for h in range(index,index+puzzle_width*height,puzzle_width): #already filled
+        if "x" in filled[h:h+width]:
+            return None, None
+        filled=filled[:h]+ "x"*width + filled[h+width:]
+
+    tup=(index//puzzle_width,index%puzzle_width,height,width)
+    return tup,filled
+
+def weirdy(rectangles):
+    global puzzle_height, puzzle_width
+    area = puzzle_height*puzzle_width
+    tmpArea = 0
+    for i in rectangles:
+        tmpArea += i[0]*i[1]
+    return area > tmpArea
+
+def printBoard(b):
+    for i in range(puzzle_height):
+        print(b[i*puzzle_width : i*puzzle_width+puzzle_width])
+
+def solve(used,filled,rects):
+
+    if rects == []:
+        return used
+    
+    oneCounter = 0
+    
+    for next_piece in rects:
+        if next_piece[0] == 1 and next_piece[1] == 1:
+            if oneCounter == 0:
+                oneCounter += 1
+                tup,new_filled=place_piece(filled,next_piece[0],next_piece[1])
+                new_rects=rects.copy()
+                new_rects.remove(next_piece)
+                if new_filled is not None:
+                    new_used=solve(used+[tup],new_filled,new_rects)
+                if new_used is not None:
+                    return new_used
+            else:
+                continue
+
+        tup,new_filled=place_piece(filled,next_piece[0],next_piece[1]) #trying 1st orientation
+        new_rects=rects.copy()
+        new_rects.remove(next_piece)
+        if new_filled is not None:
+            new_used=solve(used+[tup],new_filled,new_rects)
+            if new_used is not None:
+                return new_used
+        
+        if next_piece[0] != next_piece[1]:
+            tup,new_filled=place_piece(filled,next_piece[1],next_piece[0]) #trying 2nd orientation
+            if new_filled is not None:
+                new_used = solve(used+[tup], new_filled, new_rects)
+                if new_used is not None:
+                    return new_used
+    
+    return None
+
+inpt = "12X18 2X16 5 1 15 10 6X2 3x10"
+puzzle_height, puzzle_width, rectangles = setup(inpt)
+if puzzle_height==None:
+    print("Impossible")
+else:
+    used = solve([]," "*(puzzle_width*puzzle_height),rectangles.copy())
+    if used==None:
+        print("Impossible")
     else:
-        return "Impossible"
+        retStr = ""
+        for item in used:
+            retStr += "(" + str(item[2]) + ", " + str(item[3]) + "), "
+        print("Decomposition: [" + retStr[:len(retStr)-2] + "]")
 
-for i in blocks:
-    print(decompose(i))
-
-    """
-import sys
-
-# You are given code to read in a puzzle from the command line.  The puzzle should be a single input argument IN QUOTES.
-# A puzzle looks like this: "56 56 28x14 32x11 32x10 21x18 21x18 21x14 21x14 17x14 28x7 28x6 10x7 14x4"
-# The code below breaks it down:
-puzzle = sys.argv[1].split()
-puzzle_height = int(puzzle[0])
-puzzle_width = int(puzzle[1])
-rectangles = [(int(temp.split("x")[0]), int(temp.split("x")[1])) for temp in puzzle[2:]]
-# puzzle_height is the height (number of rows) of the puzzle
-# puzzle_width is the width (number of columns) of the puzzle
-# rectangles is a list of tuples of rectangle dimensions
-
-
-
-# INSTRUCTIONS:
-#
-# First check to see if the sum of the areas of the little rectangles equals the big area.
-# If not, output precisely this - "Containing rectangle incorrectly sized."
-#
-# Then try to solve the puzzle.
-# If the puzzle is unsolvable, output precisely this - "No solution."
-#
-# If the puzzle is solved, output ONE line for EACH rectangle in the following format:
-# row column height width
-# where "row" and "column" refer to the rectangle's top left corner.
-#
-# For example, a line that says:
-# 3 4 2 1
-# would be a rectangle whose top left corner is in row 3, column 4, with a height of 2 and a width of 1.
-# Note that this is NOT the same as 3 4 1 2 would be.  The orientation of the rectangle is important.
-#
-# Your code should output exactly one line (one print statement) per rectangle and NOTHING ELSE.
-# If you don't follow this convention exactly, my grader will fail.
-"""
+# Medha Pappula, 6, 2026
