@@ -1,0 +1,18 @@
+def quickMove(board, token):
+    #return the preferred move
+
+
+The final output when callled from command line is print(f" My preffered move is: {move}")
+At the end of the games, the grader will give you 3 bad games, to updated strategy
+
+C handle condensed path
+D Handle S-flag (suppression to only show first and last snapshot)
+
+============================================================
+
+#Othello 3 Methods
+
+def quickMove(board, token):
+    fM = findMoves(board, token)
+    return random.choice(sorted(*fM))
+

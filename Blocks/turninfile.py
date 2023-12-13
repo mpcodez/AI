@@ -1,139 +1,131 @@
 import sys; args = sys.argv[1:]
 
-global AREA
-AREA = 0
+defaultBoard = '.'*27 + "ox......xo" + '.'*27
+NBRS = {}
+SUBSETS = []
+startboard = defaultBoard
+startTkns = ''
 
-def setup(pieces):
-    global AREA
+inpt = args
+inpts = len(inpt)
+if inpts == 2:
+    if len(inpt[0]) == 64:
+        startboard = inpt[0].lower()
+        startTkns = inpt[1].lower()
+    elif len(inpt[0]) == 1:
+        startTkns = inpt[0]
+        startboard = inpt[1].lower()
+elif inpts == 1:
+    if len(inpt[0]) == 64:
+        startboard = inpt[0].lower()
+    elif len(inpt[0]) == 1:
+        startTkns = inpt[0].lower()
 
-    items = []
-    tmp = ""
-    add = False
-    for x in pieces:
-        if x == " " and add == True:
-            items.append(tmp)
-            tmp = ""
-            add = False
-            continue
-        elif x == " ":
-            tmp += "X"
-            add = True
-            continue
-
-        if x == "x" or x == "X":
-            add = True
-            tmp += "X"
-            continue
-        
-        tmp += x
-
-    items.append(tmp)
-
-    blocks = []
-
-    for i in items:
-        tmp = i.split("X")
-        blocks.append((int(tmp[0]), int(tmp[1])))
-
-    board = blocks[0]
-    blocks = blocks[1:]
-
-    blocks = sorted(blocks, key=area, reverse=True)
-
-    if AREA > board[0]*board[1]:
-        return None, None, None
-
-    while AREA != board[0]*board[1]:
-        blocks.append((1, 1))
-        AREA += 1
-
-    return board[0], board[1], blocks
-
-def area(a):
-    global AREA
-    v = a[0]*a[1]
-    AREA += v
-    return v
-
-def place_piece(filled,height,width):
-
-    index = filled.index(" ")
-    if index % puzzle_width + width > puzzle_width: #no space on right
-        return None,None
-    if index // puzzle_width + height > puzzle_height: #no space on bottom
-        return None,None
-    for h in range(index,index+puzzle_width*height,puzzle_width): #already filled
-        if "x" in filled[h:h+width]:
-            return None, None
-        filled=filled[:h]+ "x"*width + filled[h+width:]
-
-    tup=(index//puzzle_width,index%puzzle_width,height,width)
-    return tup,filled
-
-def weirdy(rectangles):
-    global puzzle_height, puzzle_width
-    area = puzzle_height*puzzle_width
-    tmpArea = 0
-    for i in rectangles:
-        tmpArea += i[0]*i[1]
-    return area > tmpArea
-
-def printBoard(b):
-    for i in range(puzzle_height):
-        print(b[i*puzzle_width : i*puzzle_width+puzzle_width])
-
-def solve(used,filled,rects):
-
-    if rects == []:
-        return used
-    
-    oneCounter = 0
-    
-    for next_piece in rects:
-        if next_piece[0] == 1 and next_piece[1] == 1:
-            if oneCounter == 0:
-                oneCounter += 1
-                tup,new_filled=place_piece(filled,next_piece[0],next_piece[1])
-                new_rects=rects.copy()
-                new_rects.remove(next_piece)
-                if new_filled is not None:
-                    new_used=solve(used+[tup],new_filled,new_rects)
-                if new_used is not None:
-                    return new_used
-            else:
-                continue
-
-        tup,new_filled=place_piece(filled,next_piece[0],next_piece[1]) #trying 1st orientation
-        new_rects=rects.copy()
-        new_rects.remove(next_piece)
-        if new_filled is not None:
-            new_used=solve(used+[tup],new_filled,new_rects)
-            if new_used is not None:
-                return new_used
-        
-        if next_piece[0] != next_piece[1]:
-            tup,new_filled=place_piece(filled,next_piece[1],next_piece[0]) #trying 2nd orientation
-            if new_filled is not None:
-                new_used = solve(used+[tup], new_filled, new_rects)
-                if new_used is not None:
-                    return new_used
-    
-    return None
-
-inpt = " ".join(args)
-puzzle_height, puzzle_width, rectangles = setup(inpt)
-if puzzle_height==None:
-    print("Impossible")
-else:
-    used = solve([]," "*(puzzle_width*puzzle_height),rectangles.copy())
-    if used==None:
-        print("Impossible")
+idxs = [i for i in range(0, len(defaultBoard))]
+for index in idxs:
+    if index % 8 == 0:
+        NBRS[index] = {index + 1,
+                             index - 8, index + 8,
+                             index - 7,
+                             index + 9}\
+            .intersection(idxs)
+    elif index % 8 == 7:
+        NBRS[index] = {index - 1,
+                             index - 8, index + 8,
+                             index + 7,
+                             index - 9} \
+            .intersection(idxs)
     else:
-        retStr = ""
-        for item in used:
-            retStr += "(" + str(item[2]) + ", " + str(item[3]) + "), "
-        print("Decomposition: [" + retStr[:len(retStr)-2] + "]")
+        NBRS[index] = {index - 1,index + 1,
+                             index - 8, index + 8,
+                             index - 7, index + 7,
+                             index - 9, index + 9} \
+            .intersection(idxs)
 
-# Medha Pappula, 6, 2026
+for index in idxs:
+    subDict = {nbr: [] for nbr in NBRS[index]}
+    for nbr in NBRS[index]:
+        diff = index - nbr
+        prev = nbr
+        current = nbr + diff
+        while -1 < current < 64 and current in NBRS[prev]:
+            if current != index:
+                subDict[nbr].append(current)
+            prev = current
+            current = current + diff
+        if len(subDict[nbr]) == 0:
+            del subDict[nbr]
+    SUBSETS.append(subDict)
+
+NBRS = {index: {key for key in SUBSETS[index]} for index in NBRS}
+delInds = {key for key in NBRS if len(NBRS[key]) == 0}
+for key in delInds:
+    del NBRS[key]
+
+print(NBRS)
+print(SUBSETS)
+
+def printBoard(board):
+    for i in range(0, 64, 8):
+        print(' '.join(board[i:i+8]))
+
+
+def printPossMoves(board, possMoves):
+    printBoard(''.join([ch if idx not in possMoves
+                        else '*' for idx, ch in enumerate(board)]))
+
+def nextTokens(board):
+    if board.count('.') % 2:
+        return 'o', 'x'
+    return 'x', 'o'
+
+
+def getOppToken(token):
+    if token == 'x':
+        return 'o'
+    return 'x'
+
+
+def checkBracketing(token, possInd, adjInd, board):
+
+    subset = SUBSETS[adjInd][possInd]
+
+    for index in subset:
+        if board[index] == '.':
+            return False
+        elif board[index] == token:
+            return True
+    return False
+
+
+
+def nextMoves(board, tokens = ''):
+    possMoves = set()
+
+    if tokens == '':
+        token, oppToken = nextTokens(board)
+    else:
+        token, oppToken = tokens, getOppToken(tokens)
+
+
+    for idx in NBRS:
+        if board[idx] == oppToken:
+            for nbr in NBRS[idx]:
+                if board[nbr] == '.':
+                    if checkBracketing(token, nbr, idx, board):
+                        possMoves.add(nbr)
+    return len(possMoves), possMoves
+
+
+if startTkns != "" and nextTokens(startboard)[0] != startTkns:
+    print('No moves possible')
+else:
+    canMove, possMoves = nextMoves(startboard, startTkns)
+
+    if canMove:
+        print(possMoves)
+    else:
+        print('No moves possible')
+        
 
 # Medha Pappula, 6, 2026
