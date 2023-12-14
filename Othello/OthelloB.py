@@ -1,11 +1,11 @@
 import sys; args = sys.argv[1:]
+import random
 
 defaultBoard = '.'*27 + "ox......xo" + '.'*27
 NBRS = {} # NBRS = {index: {adjacent indexes that moves can be made from}}
 SUBSETS = [] # SUBSETS = [{nbr: [indexes in subset], nbr: [indexes in subset]}, {etc...}]
 startboard = defaultBoard
 startTkns = ''
-startTkns = 'X'
 
 inpts = len(args) # make nicer later
 if inpts == 2:
@@ -69,6 +69,8 @@ NBRS = {index: {key for key in SUBSETS[index]} for index in NBRS}
 delInds = {key for key in NBRS if len(NBRS[key]) == 0}
 for key in delInds:
     del NBRS[key]
+
+
 
 # helper methods
 
@@ -136,11 +138,19 @@ def nextMoves(board, tokens = ''):
                         possMoves.add(nbr)
     return len(possMoves), possMoves
 
-# run
-canMove, possMoves = nextMoves(startboard, startTkns)
 
-if canMove:
-    printPossMoves(startboard, possMoves)
-    print('next moves:', possMoves)
-else:
-    print('No moves possible.')
+def quickMove(possMoves):
+    return random.choice(sorted([*possMoves]))
+
+def main():
+    canMove, possMoves = nextMoves(startboard, startTkns)
+
+    if canMove:
+        getMove = quickMove(possMoves)
+        print(f"My preffered move is: {getMove}")
+    else:
+        print('No moves possible.')
+
+if __name__ == "__main__": main()
+
+#Medha Pappula, 6, 2026

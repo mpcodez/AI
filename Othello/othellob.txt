@@ -16,3 +16,24 @@ def quickMove(board, token):
     fM = findMoves(board, token)
     return random.choice(sorted(*fM))
 
+def main():
+    #othello 3 script from command line
+
+    if game is not over:
+        getMove = quickMove(board, token)
+        print(f" My preffered move is: {move}")
+
+setGlobals()
+
+if __name__ == "__main__": main()
+
+
+============================================================
+
+A => Use rules (if this.... then that)
+- 59%   grab corners if you can
+- 69%   grab safe edge positions ex (XXXXXXOOOOOO.) if you place an X there, it can't be recaptured.
+- 74%   try to avoid xo-squares if the corner is empty  _O
+                                                        OX
+B => Numerisize the board
+- each cell has a # assigned that represents it's average utility/usefullness.
