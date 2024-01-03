@@ -1,32 +1,42 @@
 import sys; args = sys.argv[1:]
 
 startboard = '.'*27 + 'ox......xo' + '.'*27
-startTkns = ""
+startTkn = ""
 moveList = []
-args = "37 45 26 38 46 54 55 29 30 47 63 61 53 20 39 44 11 21 14 23 22 18 10 34 33 13 12 25 51 9 19 31 16 17 52 7 1 24 6 60 15 0 32 41 42 50 48 49 56 43 58 59 62 4 5 3 40 2 57 -1 8".split(" ")
+args = []
 
 for k in range(len(args)):
-    if len(args[k]) == 64:
+    if len(args[k]) == 64 and "." in args[k]:
         startboard = args[k].lower()
     elif len(args[k]) in (1, 2):
         if args[k][0] == "-":
             continue
         if args[k].lower() in 'xo':
-            startTkns = args[k].lower()
+            startTkn = args[k].lower()
         elif args[k][0].lower() in 'abcdefgh':
             moveList.append((int(args[k][1])-1)*8 + 'abcdefgh'.index(args[k][0].lower()))
         else:
             moveList.append(int(args[k]))
     else:
-        print('Incorrect inputs at index {}:\nlength {}, {}'
-              .format(k, len(args[k]), args[k]))
+        for x in [args[k][i:i+2] for i in range(0, len(args[k]), 2)]:
+            if "-" in x:
+                continue
+            else:
+                moveList.append(int(x.replace("_", "")))
 
 # global variables
+OPPS = {'x': 'o', 'o': 'x'}
 NBRS_flips = {} # NBRS_flips = {index: {adjacent indexes}}
 NBRS_moves = {} # NBRS_moves = {index: {adjacent indexes that moves can be made from}}
 SUBSETS = [] # SUBSETS = [{nbr: [indexes in subset], nbr: [indexes in subset]}, {etc...}]
 TKNSETS = {'o': {i for i in range(64) if startboard[i] == 'o'} - {0, 7, 56, 63},
              'x': {i for i in range(64) if startboard[i] == 'x'} - {0, 7, 56, 63}} # set of indexes containing o and x
+CNR_EDGES = {0: {1,2,3,4,5,6,7,8,16,24,32,40,48,56}, 7: {0,1,2,3,4,5,6,15,23,31,39,47,55,63},
+         56: {0,8,16,24,32,40,48,57,58,59,60,61,62,63}, 63: {7,15,23,31,39,47,55,56,57,58,59,60,61,62}}
+EDGE_CNR = {edgeInd: corner for corner in CNR_EDGES for edgeInd in CNR_EDGES[corner]}
+CORNERS = {0, 7, 56, 63}
+CX = {1: 0, 8: 0, 9: 0, 6: 7, 14: 7, 15: 7, 48: 56, 49: 56, 57: 56, 54: 63, 55: 63, 62: 63}
+
 
 
 # setting up NBRS -- part 1
@@ -79,8 +89,8 @@ delInds = {key for key in NBRS_moves if len(NBRS_moves[key]) == 0}
 for key in delInds:
     del NBRS_moves[key]
 
-# helper methods
 
+# helper methods
 def getScore(board):
     return board.count('x'), board.count('o')
 
@@ -137,14 +147,11 @@ def nextMoves(board, tokens = ''):
     else:
         token, oppToken = tokens, getOppToken(tokens)
 
-    for idx in TKNSETS[oppToken]: # check opposing token indexes
-        for nbr in NBRS_moves[idx]: # check if there are spaces you can move into
+    for idx in TKNSETS[oppToken]:
+        for nbr in NBRS_moves[idx]:
             if board[nbr] == '.':
                 if checkBracketing(token, nbr, idx, board) != -1:
-                    # if placing here check whether there's another
-                    # token down the line it would form a bracket with
-                    possMoves.add(nbr) # if so it's a possible move
-    # if len(possMoves) == 0, then nextMoves[0] == False
+                    possMoves.add(nbr)
     return len(possMoves), possMoves
 
 
@@ -165,6 +172,37 @@ def makeFlips(board, token, position):
     return board
 
 
+def sortMoves(token, oppTkn, board, possMoves):
+    sortedMoves = []
+    for move in possMoves:
+        score = 0
+
+        oppCanMove, oppPossMoves = nextMoves(startboard, startTkn)
+        if not oppCanMove:
+            score += 2
+
+        if move in CORNERS:
+            score += 3
+        elif move in EDGE_CNR:
+            if board[EDGE_CNR[move]] == token:
+                score += 1
+        if move in CX:
+            if board[CX[move]] == '.':
+                score = -100
+            elif board[CX[move]] == oppTkn:
+                score = -99
+
+        sortedMoves.append((score, move))
+
+    return sorted(sortedMoves)
+
+
+def quickMove(board, token):
+    oppTkn = getOppToken(token)
+    canMove, possMoves = nextMoves(board, token)
+    possibles = sortMoves(token, oppTkn, board, possMoves)
+    return possibles[len(possibles)-1][1]
+
 def play(tkn, oppTkn, movePos, board):
     print('\nPlayer {} moves to {}:'.format(tkn, movePos))
     flippedBoard = makeFlips(board, tkn, movePos)
@@ -174,7 +212,6 @@ def play(tkn, oppTkn, movePos, board):
     print('\n' + flippedBoard + ' {}/{}'.format(xTokens, oTokens))
     if canOppMove:
         print('Possible moves for {}: {}'.format(oppTkn, possOppMoves))
-        printPossMoves(flippedBoard, possOppMoves)
         return oppTkn, tkn, flippedBoard
     else:
         canMove, possMoves = nextMoves(flippedBoard, tkn)
@@ -182,34 +219,39 @@ def play(tkn, oppTkn, movePos, board):
             print('Possible moves for {}: {}'.format(tkn, possMoves))
         return tkn, oppTkn, flippedBoard
 
-# run
-
-if startTkns == '':
-    startTkns, oppTkn = nextTokens(startboard)
+if startTkn == '':
+    startTkn, oppTkn = nextTokens(startboard)
 else:
-    oppTkn = getOppToken(startTkns)
+    oppTkn = getOppToken(startTkn)
 
-canMove, possMoves = nextMoves(startboard, startTkns)
+canMove, possMoves = nextMoves(startboard, startTkn)
 if canMove == False:
     canMove, possMoves = nextMoves(startboard, oppTkn)
-    startTkns, oppTkn = oppTkn, startTkns
+    startTkn, oppTkn = oppTkn, startTkn
 
 if len(moveList) == 0:
     xTokens, oTokens = getScore(startboard)
-    printPossMoves(startboard, possMoves)
-    print('\n' + startboard + ' {}/{}'.format(xTokens, oTokens))
-    if canMove:
-        print('Possible moves for {}: {}'.format(startTkns, possMoves))
-
-else:
-    xTokens, oTokens = getScore(startboard)
-    canMove, possMoves = nextMoves(startboard, startTkns)
     printBoard(startboard)
     print('\n' + startboard + ' {}/{}'.format(xTokens, oTokens))
     if canMove:
-        print('Possible moves for {}: {}'.format(startTkns, possMoves))
+        print('Possible moves for {}: {}'.format(startTkn, possMoves))
+
+else:
+    xTokens, oTokens = getScore(startboard)
+    canMove, possMoves = nextMoves(startboard, startTkn)
+    printBoard(startboard)
+    print('\n' + startboard + ' {}/{}'.format(xTokens, oTokens))
+    if canMove:
+        print('Possible moves for {}: {}'.format(startTkn, possMoves))
     for movePos in moveList:
-        if movePos < 0: continue
-        startTkns, oppTkn, startboard = play(startTkns, oppTkn, movePos, startboard)
-        
-# Medha Pappula, 6, 2026
+        startTkn, oppTkn, startboard = play(startTkn, oppTkn, movePos, startboard)
+
+#run
+print()
+canMove, possMoves = nextMoves(startboard, startTkn)
+if canMove:
+    move = quickMove(startboard, startTkn)
+    #print(move)
+    play(startTkn, oppTkn, move, startboard)
+
+#Medha Pappula, 6, 2026
