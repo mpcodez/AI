@@ -4,7 +4,6 @@ ln = 9
 
 GAMES = 0
 LINES = [[0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 4, 8], [2, 4, 6]]
-
 visitedBoards = []
 
 def solved(board):
@@ -27,24 +26,29 @@ def printBoard(board):
     print()
 
 def searchBoards(board, tkn, oppTkn):
-    global GAMES, visitedBoards
+    global GAMES
+
+    if solved(board) or board.count(".") == 0:
+        GAMES += 1
+        return 1
+    else:
+        sum = 0
+        for move in possMoves(board):
+            sum += searchBoards(makeMove(board, tkn, move), oppTkn, tkn)
+        return sum
+    
+def srd(board, tkn, oppTkn):
+    global visitedBoards
+
     if board not in visitedBoards:
         visitedBoards.append(board)
-    
-        if (solved(board) or board.count(".") == 0):
-            GAMES += 1
-            return 1
-        else:
-            sum = 0
-            for move in possMoves(board):
-                sum += searchBoards(makeMove(board, tkn, move), oppTkn, tkn)
-            return sum
-    return 0
+
+    if not solved(board):
+        for move in possMoves(board):
+            srd(makeMove(board, tkn, move), oppTkn, tkn)
 
 
-print("Total Number Of Games:", searchBoards(board, "x", "o")) #including starting board
-print("Total Number Of Games(Backup):", GAMES)
-
-print("Total Number Of Boards:", len(visitedBoards))
-
-#255 168
+srd(board, "x", "o")
+print("Unique Boards", len(visitedBoards))
+print("Total Games", searchBoards(board, "x", "o"))
+print("Total Games (backup)", GAMES)

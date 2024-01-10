@@ -14,6 +14,7 @@ EDGE_CNR = {edgeInd: corner for corner in SAFE_EDGES for edgeInd in SAFE_EDGES[c
 CORNERS = {0, 7, 56, 63}
 CX = {1: 0, 8: 0, 9: 0, 6: 7, 14: 7, 15: 7, 48: 56, 49: 56, 57: 56, 54: 63, 55: 63, 62: 63}
 
+
 def setup(args):
     global startboard, startTkn, givenMoves, nbrFlips, nbrMoves, SUBSETS, TKNSETS, SAFE_EDGES, EDGE_CNR, CORNERS, CX, oppTkn, oppTkn
 
@@ -173,12 +174,29 @@ def playGame(tkn, oppTkn, movePos, board):
             print('Possible moves for {}: {}'.format(tkn, possMoves))
         return tkn, oppTkn, newBoard
 
+def placePiece(board, token, position):
+    oppToken = oppositeToken(token)
+
+    adjOpps = {nbr for nbr in nbrFlips[position] if board[nbr] == oppToken and position in SUBSETS[nbr]}
+
+    for opp in adjOpps:
+        idx = indexWorks(token, position, opp, board)
+        if idx > -1:
+            subset = SUBSETS[opp][position]
+            changes = set(subset[:subset.index(idx) + 1] + [position, opp])
+            TKNSETS[token] = TKNSETS[token].union(changes) - {0, 7, 56, 63}
+            TKNSETS[oppToken] = TKNSETS[oppToken] - changes
+            board = ''.join([ch if ind not in changes else token for ind, ch in enumerate(board)])
+
 def quickMove(board, token):
     setup([board, token])
     oppTkn = oppositeToken(token)
     possMoves = nextMoves(board, token)
-    possibles = sortMoves(token, oppTkn, board, possMoves)
-    return possibles[len(possibles)-1][1]
+    if len(possMoves) > 10:
+        possibles = sortMoves(token, oppTkn, board, possMoves)
+        return possibles[len(possibles)-1][1]
+    else:
+        pass
 
 def main():
     global startboard, startTkn, givenMoves, nbrFlips, nbrMoves, SUBSETS, TKNSETS, SAFE_EDGES, EDGE_CNR, CORNERS, CX, oppTkn

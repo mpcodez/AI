@@ -1,5 +1,7 @@
 import o4
 
-board = '.'*27 + 'ox......xo' + '.'*27
-mv = o4.quickMove(board,"x")
+
+args = ['.xxxxxxxxxxxxxxxxxxxxxoxxooxxooxxoooxooxoxooxxoxooxxoxoxooooooxx', 'o']
+board = args[0]
+mv = o4.quickMove(board,"o")
 print(f"For the board {board} quickMove is {mv}")
