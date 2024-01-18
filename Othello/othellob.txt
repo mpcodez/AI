@@ -37,3 +37,17 @@ A => Use rules (if this.... then that)
                                                         OX
 B => Numerisize the board
 - each cell has a # assigned that represents it's average utility/usefullness.
+
+
+
+
+
+
+
+
+====================================================================================================================================================================================
+
+Start with number of holes = 1, 2, 3
+
+1. don't recalculate puzzles for which there is already a value (use a dictionary to store the values for each)
+2. 

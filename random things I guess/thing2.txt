@@ -1,0 +1,27 @@
+
+things = input().split(" ")
+seen = []
+
+def recurse(base, goal, add, mult):
+    global seen
+    
+    if base >= goal:
+        return 0
+    
+    l = []
+    if base + add not in seen:
+        l.append(base + add)
+        seen.append(base + add)
+    
+    if base * mult not in seen:
+        l.append(base*mult)
+        seen.append(base*mult)
+    
+    d = [i+1 for i in [recurse(x, goal, add, mult) for x in l] if i != -1]
+    
+    if d:
+        return min(d)
+        
+    return -1
+
+print(recurse(int(things[0]), int(things[1]), int(things[2]), int(things[3])))

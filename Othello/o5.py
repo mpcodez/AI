@@ -1,9 +1,10 @@
 import sys; args = sys.argv[1:]
 
-startboard = '.'*27 + 'ox......xo' + '.'*27
-startTkn = ""
-oppTkn = ""
-givenMoves = []
+args = ["oooo.ooo.ooooooo.ooooxoooooxoo.oooxxxoo.oooxxxx.oooooxx.ooooo...", "x"]
+
+startboard = args[0].lower() if len(args) > 0 else '.'*27 + 'ox......xo' + '.'*27
+startTkn = args[1].lower() if len(args) > 1 else {0:'x', 1:'o'}[startboard.count('.')%2]
+oppTkn = "x" if startTkn == "o" else "o"
 nbrFlips = {}
 nbrMoves = {}
 SUBSETS = []
@@ -13,83 +14,43 @@ SAFE_EDGES = {0: {1,2,3,4,5,6,7,8,16,24,32,40,48,56}, 7: {0,1,2,3,4,5,6,15,23,31
 EDGE_CNR = {edgeInd: corner for corner in SAFE_EDGES for edgeInd in SAFE_EDGES[corner]}
 CORNERS = {0, 7, 56, 63}
 CX = {1: 0, 8: 0, 9: 0, 6: 7, 14: 7, 15: 7, 48: 56, 49: 56, 57: 56, 54: 63, 55: 63, 62: 63}
+nextMoveCache = {}
+makeFlipsCache = {}
+visitedBoards = {}
 
-
-def setup(args):
-    global startboard, startTkn, givenMoves, nbrFlips, nbrMoves, SUBSETS, TKNSETS, SAFE_EDGES, EDGE_CNR, CORNERS, CX, oppTkn, oppTkn
-
-    for k in range(len(args)):
-        if len(args[k]) == 64 and "." in args[k]:
-            startboard = args[k].lower()
-        elif len(args[k]) in (1, 2):
-            if args[k][0] == "-":
-                continue
-            if args[k].lower() in 'xo':
-                startTkn = args[k].lower()
-            elif args[k][0].lower() in 'abcdefgh':
-                givenMoves.append((int(args[k][1])-1)*8 + 'abcdefgh'.index(args[k][0].lower()))
-            else:
-                givenMoves.append(int(args[k]))
-        else:
-            for x in [args[k][i:i+2] for i in range(0, len(args[k]), 2)]:
-                if "-" in x:
-                    continue
-                else:
-                    givenMoves.append(int(x.replace("_", "")))
-
-    TKNSETS = {'o': {i for i in range(64) if startboard[i] == 'o'} - {0, 7, 56, 63}, 'x': {i for i in range(64) if startboard[i] == 'x'} - {0, 7, 56, 63}}
-
-    if startTkn == '':
-        startTkn, oppTkn = nextTokens(startboard)
+idxs = [i for i in range(0, len(startboard))]
+for index in idxs:
+    if index % 8 == 0:
+        nbrFlips[index] = {index + 1, index - 8, index + 8, index - 7, index + 9}.intersection(idxs) 
+    elif index % 8 == 7:
+        nbrFlips[index] = {index - 1, index - 8, index + 8, index + 7, index - 9}.intersection(idxs)
     else:
-        oppTkn = oppositeToken(startTkn)
+        nbrFlips[index] = {index - 1,index + 1, index - 8, index + 8, index - 7, index + 7, index - 9, index + 9}.intersection(idxs)
 
-    idxs = [i for i in range(0, len(startboard))]
+for index in idxs:
+    subDict = {nbr: [] for nbr in nbrFlips[index]}
+    for nbr in nbrFlips[index]:
+        diff = index - nbr
+        prev = nbr
+        current = nbr + diff
+        while -1 < current < 64 and current in nbrFlips[prev]:
+            if current != index:
+                subDict[nbr].append(current)
+            prev = current
+            current = current + diff
+        if len(subDict[nbr]) == 0:
+            del subDict[nbr]
+    SUBSETS.append(subDict)
 
-    for index in idxs:
-        if index % 8 == 0:
-            nbrFlips[index] = {index - 8, index - 7, index + 8, index + 1, index + 9}.intersection(idxs)
-        elif index % 8 == 7:
-            nbrFlips[index] = {index - 1, index - 8, index - 9, index + 8, index + 7}.intersection(idxs)
-        else:
-            nbrFlips[index] = {index - 1, index - 8, index - 7, index - 9, index + 1, index + 8, index + 7, index + 9}.intersection(idxs)
-
-    for index in idxs:
-        sDict = {nbr: [] for nbr in nbrFlips[index]}
-        for nbr in nbrFlips[index]:
-            d = index - nbr
-            p = nbr
-            c = nbr + d
-            while -1 < c < 64 and c in nbrFlips[p]:
-                if c != index:
-                    sDict[nbr].append(c)
-                p = c
-                c = c + d
-            if len(sDict[nbr]) == 0:
-               del sDict[nbr]
-        SUBSETS.append(sDict)
-
-    nbrMoves = {index: {key for key in SUBSETS[index]} for index in nbrFlips}
-    trash = {key for key in nbrMoves if len(nbrMoves[key]) == 0}
-    for key in trash:
-        del nbrMoves[key]
-
-def score(board):
-    return board.count('x'), board.count('o')
-
-def nextTokens(board):
-    if board.count('.') % 2:
-        return 'o', 'x'
-    return 'x', 'o'
+nbrMoves = {index: {key for key in SUBSETS[index]} for index in nbrFlips}
+delInds = {key for key in nbrMoves if len(nbrMoves[key]) == 0}
+for key in delInds:
+    del nbrMoves[key]
 
 def oppositeToken(tkn):
     if tkn == 'x':
         return 'o'
     return 'x'
-
-def printBoard(board):
-    for i in range(0, 64, 8):
-        print(' '.join(board[i:i+8]))
 
 def indexWorks(tkn, possInd, adjInd, board):
     subset = SUBSETS[adjInd][possInd]
@@ -101,20 +62,27 @@ def indexWorks(tkn, possInd, adjInd, board):
             return index
     return -1
 
-def nextMoves(board, tkn = ''):
-    global startboard, startTkn, givenMoves, nbrFlips, nbrMoves, SUBSETS, TKNSETS, SAFE_EDGES, EDGE_CNR, CORNERS, CX, oppTkn
-    possMoves = set()
+def nextMoves(board, token):
+    global nextMoveCache
+    if board + token in nextMoveCache:
+        return nextMoveCache[board + token]
 
-    if tkn == '':
-        token, oppToken = nextTokens(board)
-    else:
-        token, oppToken = tkn, oppositeToken(tkn)
+    possMoves = {}
+    oppToken = oppositeToken(token)
+    tknSet = {idx for idx in range(64) if board[idx] == oppToken} - {0, 7, 56, 63}
 
-    for idx in TKNSETS[oppToken]:
+    for idx in tknSet:
         for nbr in nbrMoves[idx]:
             if board[nbr] == '.':
-                if indexWorks(token, nbr, idx, board) != -1:
-                    possMoves.add(nbr)
+                bracket = indexWorks(token, nbr, idx, board)
+                if bracket != -1:
+                    subset = SUBSETS[idx][nbr]
+                    changes = set(subset[:subset.index(bracket) + 1] + [nbr, idx])
+                    if nbr in possMoves:
+                        possMoves[nbr] = possMoves[nbr].union(changes)
+                    else:
+                        possMoves[nbr] = changes
+    nextMoveCache[board + token] = possMoves
     return possMoves
 
 def sortMoves(token, oppTkn, board, possMoves):
@@ -142,81 +110,56 @@ def sortMoves(token, oppTkn, board, possMoves):
 
     return sorted(sortedMoves)
 
-def placePiece(board, token, position):
-    oppToken = oppositeToken(token)
-
-    adjOpps = {nbr for nbr in nbrFlips[position] if board[nbr] == oppToken and position in SUBSETS[nbr]}
-
-    for opp in adjOpps:
-        idx = indexWorks(token, position, opp, board)
-        if idx > -1:
-            subset = SUBSETS[opp][position]
-            changes = set(subset[:subset.index(idx) + 1] + [position, opp])
-            TKNSETS[token] = TKNSETS[token].union(changes) - {0, 7, 56, 63}
-            TKNSETS[oppToken] = TKNSETS[oppToken] - changes
-            board = ''.join([ch if ind not in changes else token for ind, ch in enumerate(board)])
-    return board
-
-
-def playGame(tkn, oppTkn, movePos, board):
-    print('\nPlayer {} moves to {}:'.format(tkn, movePos))
-    newBoard = placePiece(board, tkn, movePos)
-    oppMovements = nextMoves(newBoard, oppTkn)
-    printBoard(newBoard)
-    xTokens, oTokens = score(newBoard)
-    print('\n' + newBoard + ' {}/{}'.format(xTokens, oTokens))
-    if len(oppMovements):
-        print('Possible moves for {}: {}'.format(oppTkn, oppMovements))
-        return oppTkn, tkn, newBoard
-    else:
-        possMoves = nextMoves(newBoard, tkn)
-        if len(possMoves):
-            print('Possible moves for {}: {}'.format(tkn, possMoves))
-        return tkn, oppTkn, newBoard
-
-def placePiece(board, token, position):
-    oppToken = oppositeToken(token)
-
-    adjOpps = {nbr for nbr in nbrFlips[position] if board[nbr] == oppToken and position in SUBSETS[nbr]}
-
-    for opp in adjOpps:
-        idx = indexWorks(token, position, opp, board)
-        if idx > -1:
-            subset = SUBSETS[opp][position]
-            changes = set(subset[:subset.index(idx) + 1] + [position, opp])
-            TKNSETS[token] = TKNSETS[token].union(changes) - {0, 7, 56, 63}
-            TKNSETS[oppToken] = TKNSETS[oppToken] - changes
-            board = ''.join([ch if ind not in changes else token for ind, ch in enumerate(board)])
+def placePiece(board, token, position, changes):
+    global makeFlipsCache
+    if board + token + position in makeFlipsCache:
+        return makeFlipsCache[board + token + position]
+    flippedboard =  ''.join([ch if ind not in changes else token for ind, ch in enumerate(board)])
+    makeFlipsCache[board + token + position] = flippedboard
+    return flippedboard
 
 def quickMove(board, token):
-    setup([board, token])
+    movesLeft = board.count('.')
+    if movesLeft <= 10:
+        nm = negamax(board, token)
+        print('Score: {} Sequence: {}'.format(nm[0], nm[1:]))
+    else:
+        possMoves = nextMoves(board, token)
+        possibles = sortMoves(token, oppositeToken(token), board, possMoves)
+        print([possible[1] for possible in possibles])
+
+COUNT = 0
+
+def negamax(board, token):
+
     oppTkn = oppositeToken(token)
     possMoves = nextMoves(board, token)
-    if len(possMoves) > 10:
-        possibles = sortMoves(token, oppTkn, board, possMoves)
-        return possibles[len(possibles)-1][1]
-    else:
-        pass
+
+    if (board, token) in visitedBoards:
+        print(visitedBoards[(board, token)])
+    
+    if not possMoves:
+        possOppMoves = nextMoves(board, oppTkn)
+
+        if not possOppMoves:
+            score = [board.count(token) - board.count(oppTkn)]
+            visitedBoards[(board, oppTkn, {})] = score
+            visitedBoards[(board, token, {})] = score
+            return score
+        
+        nm = negamax(board, oppTkn)
+        score = [-nm[0]] + nm[1:] + [-1]
+        visitedBoards[(board, token, possMoves)] = score
+        return score
+
+    best = min(negamax(placePiece(board, token, str(move), possMoves[move]), oppTkn) + [move] for move in possMoves)
+    score = [-best[0]] + best[1:]
+    visitedBoards[(board, token, possMoves)] = score
+    return score
 
 def main():
-    global startboard, startTkn, givenMoves, nbrFlips, nbrMoves, SUBSETS, TKNSETS, SAFE_EDGES, EDGE_CNR, CORNERS, CX, oppTkn
+    quickMove(startboard, startTkn)
 
-    setup(args)
-
-    possMoves = nextMoves(startboard, startTkn)
-    if len(possMoves) == False:
-        possMoves = nextMoves(startboard, oppTkn)
-        startTkn, oppTkn = oppTkn, startTkn
-
-    xTokens, oTokens = score(startboard)
-    possMoves = nextMoves(startboard, startTkn)
-    printBoard(startboard)
-    print('\n' + startboard + ' {}/{}'.format(xTokens, oTokens))
-    
-    if len(possMoves):
-        print('Possible moves for {}: {}'.format(startTkn, possMoves))
-        for movePos in givenMoves:
-            startTkn, oppTkn, startboard = playGame(startTkn, oppTkn, movePos, startboard)
                 
 if __name__ == '__main__':
     main()
