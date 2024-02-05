@@ -1,10 +1,11 @@
-5923
-56 27 73 34 99 45 32 19 64 57 18
-4687
-81 72 15 89 36 21 13 67 42 93 48 83 45 47 52 94 62
-1932
-94 81 13 43 21 31 89 69 18 28 86 88 29 89 92
-1957
-32 69 87 73 31 88 62
-1542
-24 44 39 32 92 63 47 76 37 78 38
+ACSL, or the American Computer Science League, is an international computer science competition among more than 300 schools.  Originally founded in 1978 as the Rhode Island Computer Science League, it then became the New England Computer Science Leage.  With countrywide and worldwide participants, it became the American Computer Science League.  It has been in continuous existence since 1978.  Each yearly competition consists of 4 regular-season contests.  All students at each school may compete but the team score is the sume of the best 3 or 5 top scores.  Each contest consists of two parts: a written section (called shorts) and a programming section.  Written topics tested include what does this program do, digital electronics, Boolean algebra, computer numbering systems, recursive functions, data structures (primarily dealing with heaps, binary search trees, stacks, and queues), Lisp programming, regular expressions and Finite State Automata, bit string flicking, graph theory, assembly programming and prefix/postfix/infix notation.
+3.5.1 8.21.9 1.10.8 2.7.2 7.15.6 5.4.3 4.10.3 6.18.1
+To be or not to be, that is the question - a quote by William Shakespeare.  2B or not 2B - a hexadecimal equivalent!  How would you write it?
+2.1.2 1.3.1 1.4.2 2.7.7 1.12.5 2.5.1 2.3.1 1.16.2 1.14.5 1.10.4 4.1.1 1.14.6 2.7.7 3.2.1 1.14.6 3.3.1 1.15.6 3.3.4 1.1.1 1.15.10 2.7.3 1.10.3
+Various programming languages are: Java, Python, Visual BASIC, C++, Lisp, C#, FORTRAN, R, SQL. Javascript is the language of the Internet! HTML stands for Hypertext Markup
+Language and is not really a coding language! There are over 300 languages. Which one do you like the best?
+2.1.1 1.2.6 2.1.3 1.3.6 1.11.3 2.1.8 2.2.2 4.6.1 3.2.2 4.1.2 2.6.3 5.3.3 3.13.1 3.13.6 3.6.3 3.12.6 3.5.5 1.5.4 3.6.4 3.4.4 6.1.2 5.2.1 3.3.1 1.13.6 1.12.6 1.6.1 3.14.1 1.9.1 1.14.1
+Four score and seven years ago our fathers brought forth on this continent, a new nation, convieved in Liberty, and dedicated to the proposition that all men are created equal.  Now we are engaged in a great civil ware, testing whether that nation, or any nation so concieved and so dedicated, can long endure.  We are met on a great battle-field of that war.  We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live.  It is altogether fitting and proper that we should do this.  This was written by Abraham Lincoln on 11/19/1863!
+2.1.1 1.2.3 8.6.3 6.9.1 1.31.1 1.8.7 5.6.1 1.13.7 1.15.2 2.18.1 2.12.2 8..10.4 6.7.1 4.8.2 7.4.1 1.16.2 3.8.4 4.10.4 3.12.1 1.21.7 2.5.1 6.5.7 1.13.7
+There are 10 kinds of people in the world: those who know binary and those who don't! Thus learn binary.
+1.12.4 2.1.2 2.2.3 1.18.1 3.1.4 1.2.1 1.9.3 1.10.5 1.20.1 1.13.6 1.16.3 2.1.3

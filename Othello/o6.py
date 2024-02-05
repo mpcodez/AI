@@ -1,11 +1,13 @@
 import sys; args = sys.argv[1:]
 
+args = ['44454652534359611847346038585150626354555756-139-131-149-142-12930-337', "o"]
+
 startboard = '.'*27 + 'ox......xo' + '.'*27
 startTkn = {0:'x', 1:'o'}[startboard.count('.')%2]
 moveList = []
 visitedBoards = {}
 verbose = False
-kickin = 0
+kickin = 12
 
 for k in range(len(args)):
     if len(args[k]) == 64:
@@ -232,46 +234,23 @@ def estimateMoves(board, token):
 
 def moveIt(board, token):
 
-    if board.count(".")>kickin:
-        print("The preferred move is: "+str(move(board, token)))              
+    movesLeft = board.count('.')
+    if movesLeft <= kickin:
+        ab = alphabeta(board, token, -65, 65)
+        print('Score: {} Sequence: {}'.format(ab[0], ab[1:]))
     else:
-        scoreList = alphabetaTopLvl(board, token, -65, 65)
-        bestPsblScore = scoreList[0]
-        reversedMoveSeq = scoreList[1:] 
-        print("The preferred move is: "+str(reversedMoveSeq[-1]))
-        print("Score: "+str(bestPsblScore)+" Sequence: "+str(reversedMoveSeq))
-
-
-def move(board, token):
-    if board.count(".") <= kickin:
-        ab = alphabetaTopLvl(board, token, -65, 65)
-        return ab[1]
-    else:
-        oppTkn = getOppToken(token)
         possibles = estimateMoves(board, token)
         return possibles[len(possibles)-1]
 
 def quickMove(board, token):
-    global kickin
-    
-    if board == "":
-        kickin = int(token)
-        return
-    else:
-        tmp = kickin
-        setup([board, token])
-        kickin = tmp
-        movesLeft = board.count(".")
-
-        if movesLeft <= kickin:
-            ab = alphabetaTopLvl(board, token, -65, 65)
-            return ab[-1]
-        else:
-            possibles = estimateMoves(board, token)
-            return possibles[len(possibles)-1]
+    setup([board, token])
+    oppTkn = getOppToken(token)
+    possibles = estimateMoves(board, token)
+    return possibles[len(possibles)-1]
 
 def play(tkn, oppTkn, movePos, board):
-    print('\n{} plays to {}'.format(tkn, movePos))
+    if verbose:
+        print('\n{} plays to {}'.format(tkn, movePos))
     possMoves = nextMoves(board, tkn)
     flippedBoard = makeFlips(board, tkn, movePos, possMoves)
     possOppMoves = nextMoves(flippedBoard, oppTkn)
@@ -399,6 +378,7 @@ def alphabetaTopLvl(board, token, lower, upper): # want to return: min guarantee
 
     return best
 
+
 def main():
     global startTkn, startboard
 
@@ -418,7 +398,9 @@ def main():
                 xTokns, oTokns = getScore(startboard)
                 print('\n' + startboard + ' {}/{}'.format(xTokns, oTokns)) 
                 print('Possible moves for {}: {}'.format(startTkn, list(possMoves.keys())))
-                moveIt(startboard, startTkn)
+                print("My preferred move is: " + str(quickMove(startboard, startTkn)))
+                if kickin != 0 and startboard.count(".") <= kickin:
+                    moveIt(startboard, startTkn)
 
         else:
 
@@ -430,11 +412,21 @@ def main():
                 xTokns, oTokns = getScore(startboard)
                 print(startboard + ' {}/{}'.format(xTokns, oTokns)) 
                 print('Possible moves for {}: {}'.format(startTkn, list(possMoves.keys())))
-                moveIt(startboard, startTkn)
+                if kickin != 0 and startboard.count(".") <= kickin:
+                    moveIt(startboard, startTkn)
                 
             for movePos in moveList:
-                if movePos < 0: continue
-                startTkn, oppTkn, startboard = play(startTkn, oppTkn, movePos, startboard)                
+                if movePos < 0:
+                    continue
+                mP = movePos
+                if movePos in nextMoves(startboard, startTkn):
+                    s = startTkn
+                    startTkn, oppTkn, startboard = play(startTkn, oppTkn, movePos, startboard)   
+                elif movePos in nextMoves(startboard, oppTkn):
+                    s = oppTkn
+                    startTkn, oppTkn, startboard = play(oppTkn, startTkn, movePos, startboard)
+            
+            print('\n{} plays to {}'.format(s, mP))
             
             print()
             movePos = moveList[len(moveList)-1]
@@ -444,8 +436,7 @@ def main():
             print(startboard[:movePos] + startboard[movePos].upper() + startboard[movePos+1:] + ' {}/{}'.format(xTokens, oTokens))
             if len(possOppMoves) != 0:
                 print('Possible moves for {}: {}'.format(startTkn, str(possOppMoves).replace("[", "").replace("]", "")))
-                print("My preferred move is: " + str(move(startboard, startTkn)))
-                moveIt(startboard, startTkn)
+                print("My preferred move is: " + str(quickMove(startboard, startTkn)))
             else:
                 print("No Moves Possible")
 

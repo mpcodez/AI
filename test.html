@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Database Example</title>
+  <!-- Include Firebase Realtime Database library -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database.js"></script>
+</head>
+<body>
+
+  <h1>Firebase Database Example</h1>
+  <h2>hiiiiii</h2>
+
+  <ul id="dataList"></ul>
+
+  <script type="module">
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBkiqo8iAjzUFHkF0367PqoHyeRmfxcULs",
+      authDomain: "certamen-bot.firebaseapp.com",
+      projectId: "certamen-bot",
+      storageBucket: "certamen-bot.appspot.com",
+      messagingSenderId: "681363620591",
+      appId: "1:681363620591:web:df73496bc23ea80f7ad11a"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Reference to your Firebase Realtime Database
+    const database = firebase.database();
+
+    // Reference to the specific data node in your database
+    const dataRef = database.ref('Questions');
+
+    // Function to fetch and display data
+    function fetchData() {
+      dataRef.on('value', (snapshot) => {
+        const dataList = document.getElementById('dataList');
+        dataList.innerHTML = ''; // Clear previous data
+
+        snapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          const listItem = document.createElement('li');
+          listItem.textContent = data.document; // Replace with your actual property name
+          dataList.appendChild(listItem);
+        });
+      });
+    }
+
+    // Call the function to fetch and display data
+    fetchData();
+  </script>
+
+<h2>hiiiiii</h2>
+
+</body>
+</html>

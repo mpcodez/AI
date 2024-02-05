@@ -1,0 +1,73 @@
+import re
+
+def getSentences(sr):
+    tmp = sr.replace(".", "//'//'//").replace("?", "//'//'//").replace("!", "//'//'//")
+    return [i.strip() for i in tmp.split("//'//'//") if i != ""]
+
+def getWords(sr):
+    retL = []
+    tmp = ""
+    for i in sr:
+        if not i.isalnum():
+            if tmp != "":
+                retL.append(tmp)
+            tmp = ""
+        else:
+            tmp += i
+    if tmp != "":
+        retL.append(tmp)
+    return retL
+
+
+def decrypt(lines, keys):
+    lineList = getSentences(lines)
+    retStr = ""
+    for k in [i for key in keys for i in key]:
+        indx = k.split(".")
+        try:
+            words = getWords(lineList[int(indx[0])-1])
+            word = words[int(indx[1])-1]
+            ch = word[int(indx[2])-1]
+            retStr += ch
+        except:
+            retStr += " "
+    
+    print(retStr)
+
+with open("ACSL/test.txt", encoding = "utf-8") as f:    
+
+    wow = False
+    lines = ""
+    keys = []
+    for line in f:
+
+        tmp = False
+        i = 0
+        count = 0
+        while (line[i].isnumeric() or line[i] == ".") and count <= 2:
+            i+=1
+            if line[i] == ".":
+                count += 1
+    
+        if count == 2:
+            tmp = True
+
+        if wow == False and tmp == False:
+            lines += line.replace("\n"," ")
+
+        elif wow == True and tmp == True:
+            keys.append(line.replace("\n","").split(" "))
+            
+        elif wow == False and tmp == True:
+            wow = True
+            keys.append(line.replace("\n","").split(" "))
+
+        elif wow == True and tmp == False:
+            wow = False
+            decrypt(lines.strip(" "), keys)
+            lines = ""
+            keys = []
+            lines += line.replace("\n"," ")
+    
+
+    decrypt(lines.strip(" "), keys)

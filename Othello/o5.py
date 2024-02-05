@@ -1,6 +1,6 @@
 import sys; args = sys.argv[1:]
 
-args = ["oooo.ooo.ooooooo.ooooxoooooxoo.oooxxxoo.oooxxxx.oooooxx.ooooo...", "x"]
+args = "xxxxxxxxxxxxxoooxxxxoxooxooxxoooxxoxxoooxxxoooooxxxoooooooooox.o o".split(" ")
 
 startboard = args[0].lower() if len(args) > 0 else '.'*27 + 'ox......xo' + '.'*27
 startTkn = args[1].lower() if len(args) > 1 else {0:'x', 1:'o'}[startboard.count('.')%2]
@@ -128,8 +128,6 @@ def quickMove(board, token):
         possibles = sortMoves(token, oppositeToken(token), board, possMoves)
         print([possible[1] for possible in possibles])
 
-COUNT = 0
-
 def negamax(board, token):
 
     oppTkn = oppositeToken(token)
@@ -159,7 +157,6 @@ def negamax(board, token):
 
 def main():
     quickMove(startboard, startTkn)
-
                 
 if __name__ == '__main__':
     main()
