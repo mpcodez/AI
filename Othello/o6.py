@@ -1,6 +1,6 @@
 import sys; args = sys.argv[1:]
 
-args = ['44454652534359611847346038585150626354555756-139-131-149-142-12930-337', "o"]
+args = ["v"]
 
 startboard = '.'*27 + 'ox......xo' + '.'*27
 startTkn = {0:'x', 1:'o'}[startboard.count('.')%2]
@@ -398,6 +398,7 @@ def main():
                 xTokns, oTokns = getScore(startboard)
                 print('\n' + startboard + ' {}/{}'.format(xTokns, oTokns)) 
                 print('Possible moves for {}: {}'.format(startTkn, list(possMoves.keys())))
+                print()
                 print("My preferred move is: " + str(quickMove(startboard, startTkn)))
                 if kickin != 0 and startboard.count(".") <= kickin:
                     moveIt(startboard, startTkn)

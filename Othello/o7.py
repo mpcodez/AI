@@ -1,5 +1,7 @@
 import sys; args = sys.argv[1:]
 
+args = ["v"]
+
 def switchTok(token):
     return 'X' if token == 'O' else 'O'
 
