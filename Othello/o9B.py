@@ -1,12 +1,6 @@
-# Aditya Vasantharao, pd. 4
 import sys; args = sys.argv[1:]
 import time
 import random
-
-# LIMIT_AB = 14
-# num_games = 10
-# recur_limit = 13
-# time_limit = 10
 
 LIMIT_AB = 14
 recur_limit = 5
@@ -43,48 +37,65 @@ positions = {"corners" : corners, "csquares" : csquares, "csquares_worse" : csqu
     "row2colb" : row2colb, "edges": edges, "inner_diagonals" : inner_diagonals}
 
 def main():
-    board = '.' * 27 + 'ox......xo' + '.' * 27
-    tokenToMove = ''
-    oppositeToken = ''
-    possible_moves = []
-    first_run = args == []
+    if not args:
+        scores = []
+        times = []
+        try:
+            result = playTournament(num_games, LIMIT_AB)
+            scores.append(result[0][:-1])
+            times.append(str(result[1])[:5])
+        except KeyboardInterrupt:
+            pass
 
-    while args or first_run:
-        if args and args[0].startswith('-'):
-            args.pop(0)
-            continue
+        print('\n\n------------FINAL STATS (scores, times)------------')
+        print(*scores)
+        print(*times)
 
-        if args and len(args[0]) == 64:
-            board = args[0].lower()
-            args.pop(0)
+    else:
+        # setup
 
-        if args and args[0].isalpha():
-            tokenToMove = args[0].lower()
-            args.pop(0)
-        elif not tokenToMove:
-            num_tokens = 64 - board.count('.')
+        board = '.' * 27 + 'ox......xo' + '.' * 27
+        tokenToMove = ''
+        oppositeToken = ''
+        possible_moves = []
+        first_run = args == []
 
-            if num_tokens % 2 == 0:
-                tokenToMove = 'x'
-            else:
-                tokenToMove = 'o'
+        while args or first_run:
+            if args and args[0].startswith('-'):
+                args.pop(0)
+                continue
 
-        if args and args[0]:
-            if args[0].isdigit():
-                temp_move = int(args[0])
-                if 0 <= temp_move <= 63:
-                    possible_moves.append(temp_move)
-                    args.pop(0)
-            else:
-                if len(args[0]) == 2 and 'a' <= args[0][0].lower() <= 'h' and args[0][1].isdigit() and 0 <= int(args[0][1]) <= 8:
-                    possible_moves.append((int(args[0][1]) - 1) * 8 + ord(args[0][0].lower()) - ord('a'))
-                    args.pop(0)
+            if args and len(args[0]) == 64:
+                board = args[0].lower()
+                args.pop(0)
 
-        first_run = False
+            if args and args[0].isalpha():
+                tokenToMove = args[0].lower()
+                args.pop(0)
+            elif not tokenToMove:
+                num_tokens = 64 - board.count('.')
 
-    oppositeToken = 'o' if tokenToMove == 'x' else 'x'
+                if num_tokens % 2 == 0:
+                    tokenToMove = 'x'
+                else:
+                    tokenToMove = 'o'
 
-    print(findBestMove(board, tokenToMove, oppositeToken, LIMIT_AB, recur_limit))
+            if args and args[0]:
+                if args[0].isdigit():
+                    temp_move = int(args[0])
+                    if 0 <= temp_move <= 63:
+                        possible_moves.append(temp_move)
+                        args.pop(0)
+                else:
+                    if len(args[0]) == 2 and 'a' <= args[0][0].lower() <= 'h' and args[0][1].isdigit() and 0 <= int(args[0][1]) <= 8:
+                        possible_moves.append((int(args[0][1]) - 1) * 8 + ord(args[0][0].lower()) - ord('a'))
+                        args.pop(0)
+
+            first_run = False
+
+        oppositeToken = 'o' if tokenToMove == 'x' else 'x'
+
+        print(findBestMove(board, tokenToMove, oppositeToken, LIMIT_AB, recur_limit))
 
 
 # Heuristic is calculated using token counts, mobility, and square valuation
@@ -712,9 +723,6 @@ class Strategy():
 
         print(board, best_move.value)
 
-        # best_move.value = findBestMove(board, player, oppositeToken, LIMIT_AB, recur_limit, best_move_obj=best_move)
-
-
 opening_book_raw = ['C4c3D3c5B3f4B5b4C6d6F5', 'C4c3D3c5B4d2C2f4D6c6F5e6F7', 'C4c3D3c5B6c6B5', 'C4c3D3c5D6f4B4c6B5b3B6e3C2a4A5a6D2', 'C4c3D3c5D6f4B4b6B5c6B3', 'C4c3D3c5D6f4B4e3B3', 'C4c3D3c5D6f4F5d2G4d7', 'C4c3D3c5D6f4F5d2B5', 'C4c3D3c5D6f4F5e6C6d7', 'C4c3D3c5D6f4F5e6F6', 'C4c3D3c5F6e3C6f5F4g5', 'C4c3D3c5F6e2C6', 'C4c3E6c5', 'C4c3F5c5', 'C4e3F4c5D6f3E6c3D3e2B5f5B4f6C2e7D2c7', 'C4e3F4c5D6f3D3c3', 'C4e3F4c5D6f3E6c3D3e2B6f5B4f6G5d7', 'C4e3F4c5D6f3E6c3D3e2B5f5B3', 'C4e3F4c5D6f3E6c3D3e2B6f5G5f6', 'C4e3F5b4F3f4E2e6G5f6D6c6', 'C4e3F5e6F4c5D6c6F7g5G6', 'C4e3F6e6F5c5C3c6D3d2E2b3C1c2B4a3A5b5A6a4A2', 'C4e3F6e6F5c5C3b4D6c6B5a6B6c7', 'C4e3F6e6F5c5C3c6D6', 'C4e3F6e6F5c5F4g5G4f3C6d3D6b3C3b4E2b6', 'C4e3F6e6F5c5F4g6F7d3', 'C4e3F6e6F5g6E7c5']
 opening_book = {}
 
@@ -746,4 +754,6 @@ for i in opening_book_raw:
                 opening_book[board_to_add].add(index_to_add)
 
 if __name__ == '__main__':
-    main() 
+    main()
+    
+#Medha Pappula, 6, 2026

@@ -248,6 +248,8 @@ def main():
         if move not in poss_moves:
             player = "xo"[player == "x"]
         board = makeMove(board, player, move)
+        #print(f'{player} moves to {move}')
+
         player = "xo"[player == "x"]
 
         poss_moves = allPossibilities(board, player)
@@ -255,6 +257,11 @@ def main():
             player = "xo"[player == "x"]
             poss_moves = allPossibilities(board, player)
         string_moves = ", ".join(str(move) for move in poss_moves)
+
+        #printBoard(board, poss_moves)
+        #print(f'{board} {board.lower().count("x")}/{board.lower().count("o")}')
+
+        #print(f'Possible moves for {player}: {string_moves}')
 
     if board.count(".") == 0 or not allPossibilities(board, player) and not allPossibilities(board, "xo"[player == "x"]):
         print()

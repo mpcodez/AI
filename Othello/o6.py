@@ -141,6 +141,9 @@ def setup(args):
     delInds = {key for key in NBRS_moves if len(NBRS_moves[key]) == 0}
     for key in delInds:
         del NBRS_moves[key]
+    
+    NBRS_moves = {index: k for index in NBRS_flips if len(k:={key for key in SUBSETS[index]}) != 0}
+
     NBRS_moves_r = {index: {key for key in NBRS_moves if index in NBRS_moves[key]} for index in range(64)}
 
 def printBoard(board):

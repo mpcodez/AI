@@ -1,6 +1,6 @@
 import sys; args = sys.argv[1:]
 
-args = "xxxxxxxxxxxxxoooxxxxoxooxooxxoooxxoxxoooxxxoooooxxxoooooooooox.o o".split(" ")
+args = "oooooooooxxxxxx.oxxxox..oxxoxxx.oxoxox..ooxxxxx.o............... x".split(" ")
 
 startboard = args[0].lower() if len(args) > 0 else '.'*27 + 'ox......xo' + '.'*27
 startTkn = args[1].lower() if len(args) > 1 else {0:'x', 1:'o'}[startboard.count('.')%2]
