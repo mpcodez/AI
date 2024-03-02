@@ -1,22 +1,19 @@
 import sys; args = sys.argv[1:]
+import random, re
 
-args = ['14x14', '108', 'h3x2', 'V2x3', 'V4x4', 'H7x4', 'H9x6', 'H8x5']
-
-import random, re, math
 BLOCKCHAR='#'
 OPENCHAR='-'
 PROTECTEDCHAR='~'
+
 def main():
     if len(args)<1:
         exit()
     inTest=[r"^(\d+)x(\d+)$", r"^\d+$", r"^(H|V)(\d+)x(\d+)(.*)$"]
     xheight, xwidth, blockCt, dictSeen= 4,4,0,False
     fixedWords=[]
+    dictLines=open(args[0]).read().splitlines()
+    dictSeen = True
     for arg in args:
-        # if os.path.isfile(arg):
-        #     dictLines=open(arg,'r').read().splitlines()
-        #     dictSeen=True
-        #     continue
         for testNum, retest in enumerate(inTest):
             match= re.search(retest, arg, re.I)
             if not match: continue
