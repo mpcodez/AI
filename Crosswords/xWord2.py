@@ -1,6 +1,8 @@
 import sys; args = sys.argv[1:]
 import time
 
+args = ["Crosswords/twentyk.txt", '6x6', '8', 'V5x2#', 'h0x2B', 'v0x3', 'h1x3M', 'h1x5#', 'h2x3O']
+
 height, width, numBS = 0, 0, 0
 hWords, vWords = [], []
 hEmpty = {}
